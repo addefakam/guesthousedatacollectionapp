@@ -43,17 +43,9 @@ import {
   Trash2,
   Eye,
   Building2,
-  MapPin,
-  Bed,
-  Star,
-  Phone,
   ChevronLeft,
   ChevronRight,
   RefreshCw,
-  Wifi,
-  Car,
-  Utensils,
-  Droplets,
   FileSpreadsheet,
 } from 'lucide-react';
 import { locationData, getAllSubCities } from '@/lib/location-data';
@@ -110,7 +102,7 @@ export default function DataList({ refreshTrigger }: DataListProps) {
       if (filterSubCity) params.set('subCity', filterSubCity);
       if (filterArea) params.set('area', filterArea);
       params.set('page', String(page));
-      params.set('limit', '20');
+      params.set('limit', '50');
 
       const res = await fetch(`/api/guesthouses?${params}`);
       if (!res.ok) throw new Error('Failed to fetch');
@@ -221,23 +213,6 @@ export default function DataList({ refreshTrigger }: DataListProps) {
     }
   };
 
-  const renderStars = (rating: number) => {
-    return (
-      <div className="flex items-center gap-0.5">
-        {[1, 2, 3, 4, 5].map((s) => (
-          <Star
-            key={s}
-            className={`h-4 w-4 ${
-              s <= rating
-                ? 'fill-amber-400 text-amber-400'
-                : 'fill-none text-gray-300'
-            }`}
-          />
-        ))}
-      </div>
-    );
-  };
-
   return (
     <div className="space-y-4">
       {/* Search & Filters */}
@@ -310,7 +285,7 @@ export default function DataList({ refreshTrigger }: DataListProps) {
             </Select>
           </div>
 
-          <div className="flex gap-2">
+          <div className="flex flex-wrap gap-2">
             <Button
               variant="outline"
               size="sm"
@@ -325,7 +300,7 @@ export default function DataList({ refreshTrigger }: DataListProps) {
               onClick={handleExportCSV}
             >
               <Download className="mr-1 h-4 w-4" />
-              Export CSV
+              CSV
             </Button>
             <Button
               size="sm"
@@ -333,25 +308,22 @@ export default function DataList({ refreshTrigger }: DataListProps) {
               onClick={handleExportExcel}
             >
               <FileSpreadsheet className="mr-1 h-4 w-4" />
-              Export Excel
+              Excel
             </Button>
           </div>
         </CardContent>
       </Card>
 
-      {/* Data List */}
+      {/* Data Table */}
       {loading ? (
-        <div className="space-y-3">
-          {[1, 2, 3].map((i) => (
-            <Card key={i}>
-              <CardContent className="p-4">
-                <Skeleton className="mb-2 h-5 w-3/4" />
-                <Skeleton className="mb-1 h-4 w-1/2" />
-                <Skeleton className="h-4 w-2/3" />
-              </CardContent>
-            </Card>
-          ))}
-        </div>
+        <Card>
+          <CardContent className="p-4 space-y-3">
+            <Skeleton className="h-10 w-full" />
+            {[1, 2, 3, 4].map((i) => (
+              <Skeleton key={i} className="h-12 w-full" />
+            ))}
+          </CardContent>
+        </Card>
       ) : data.length === 0 ? (
         <Card>
           <CardContent className="flex flex-col items-center justify-center py-12 text-center">
@@ -367,97 +339,138 @@ export default function DataList({ refreshTrigger }: DataListProps) {
           </CardContent>
         </Card>
       ) : (
-        <div className="space-y-3">
-          {data.map((item) => (
-            <Card key={item.id} className="transition-shadow hover:shadow-md">
-              <CardContent className="p-4">
-                <div className="flex items-start justify-between gap-3">
-                  <div className="min-w-0 flex-1">
-                    <h3 className="truncate text-base font-semibold">
-                      {item.guestHouseName}
-                    </h3>
-                    {item.organizationName && (
-                      <p className="truncate text-xs text-muted-foreground">
-                        {item.organizationName}
-                      </p>
-                    )}
-                    <div className="mt-1 flex items-center gap-1.5 text-sm text-muted-foreground">
-                      <MapPin className="h-3.5 w-3.5 shrink-0" />
-                      <span className="truncate">
-                        {item.area}, {item.subCity}
-                      </span>
+        <Card>
+          <CardContent className="p-0">
+            {/* Desktop Table */}
+            <div className="hidden md:block overflow-x-auto">
+              <table className="w-full text-sm">
+                <thead>
+                  <tr className="border-b bg-muted/50">
+                    <th className="px-3 py-3 text-left font-semibold text-muted-foreground whitespace-nowrap">#</th>
+                    <th className="px-3 py-3 text-left font-semibold text-muted-foreground whitespace-nowrap">Organization / Dhaabbataa</th>
+                    <th className="px-3 py-3 text-left font-semibold text-muted-foreground whitespace-nowrap">Sub-City</th>
+                    <th className="px-3 py-3 text-left font-semibold text-muted-foreground whitespace-nowrap">Area</th>
+                    <th className="px-3 py-3 text-left font-semibold text-muted-foreground whitespace-nowrap">Address</th>
+                    <th className="px-3 py-3 text-center font-semibold text-muted-foreground whitespace-nowrap">Rooms</th>
+                    <th className="px-3 py-3 text-left font-semibold text-muted-foreground whitespace-nowrap">License Type</th>
+                    <th className="px-3 py-3 text-left font-semibold text-muted-foreground whitespace-nowrap">License Level</th>
+                    <th className="px-3 py-3 text-left font-semibold text-muted-foreground whitespace-nowrap">License No.</th>
+                    <th className="px-3 py-3 text-left font-semibold text-muted-foreground whitespace-nowrap">Owner</th>
+                    <th className="px-3 py-3 text-left font-semibold text-muted-foreground whitespace-nowrap">Contact Person</th>
+                    <th className="px-3 py-3 text-left font-semibold text-muted-foreground whitespace-nowrap">Phone</th>
+                    <th className="px-3 py-3 text-left font-semibold text-muted-foreground whitespace-nowrap">Surveyor</th>
+                    <th className="px-3 py-3 text-left font-semibold text-muted-foreground whitespace-nowrap">Date</th>
+                    <th className="px-3 py-3 text-center font-semibold text-muted-foreground whitespace-nowrap">Actions</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {data.map((item, idx) => (
+                    <tr
+                      key={item.id}
+                      className="border-b last:border-b-0 hover:bg-muted/30 transition-colors"
+                    >
+                      <td className="px-3 py-2.5 text-muted-foreground text-xs">
+                        {(page - 1) * 50 + idx + 1}
+                      </td>
+                      <td className="px-3 py-2.5 font-medium max-w-[160px] truncate" title={item.organizationName || item.guestHouseName}>
+                        {item.organizationName || item.guestHouseName}
+                      </td>
+                      <td className="px-3 py-2.5 whitespace-nowrap">{item.subCity}</td>
+                      <td className="px-3 py-2.5 whitespace-nowrap">{item.area}</td>
+                      <td className="px-3 py-2.5 max-w-[140px] truncate" title={item.specificAddress}>
+                        {item.specificAddress}
+                      </td>
+                      <td className="px-3 py-2.5 text-center">
+                        <span className="inline-flex items-center justify-center h-6 min-w-[24px] rounded-full bg-emerald-100 text-emerald-700 text-xs font-semibold px-1.5">
+                          {item.numberOfRooms}
+                        </span>
+                      </td>
+                      <td className="px-3 py-2.5 whitespace-nowrap">
+                        <Badge variant="outline" className="text-xs font-normal">{item.licenseType}</Badge>
+                      </td>
+                      <td className="px-3 py-2.5 whitespace-nowrap">
+                        <Badge variant="secondary" className="text-xs font-normal">{item.licenseLevel}</Badge>
+                      </td>
+                      <td className="px-3 py-2.5 whitespace-nowrap font-mono text-xs">{item.licenseNumber || '-'}</td>
+                      <td className="px-3 py-2.5 max-w-[120px] truncate" title={item.ownerName || undefined}>
+                        {item.ownerName || '-'}
+                      </td>
+                      <td className="px-3 py-2.5 max-w-[120px] truncate" title={item.contactName || undefined}>
+                        {item.contactName || '-'}
+                      </td>
+                      <td className="px-3 py-2.5 whitespace-nowrap">
+                        <a href={`tel:${item.contactPhone || ''}`} className="text-emerald-600 hover:underline text-xs">
+                          {item.contactPhone || '-'}
+                        </a>
+                      </td>
+                      <td className="px-3 py-2.5 max-w-[100px] truncate text-xs text-muted-foreground" title={item.surveyorName || undefined}>
+                        {item.surveyorName || '-'}
+                      </td>
+                      <td className="px-3 py-2.5 whitespace-nowrap text-xs text-muted-foreground">
+                        {new Date(item.createdAt).toLocaleDateString('en-GB')}
+                      </td>
+                      <td className="px-3 py-2.5">
+                        <div className="flex items-center justify-center gap-1">
+                          <Button
+                            variant="ghost"
+                            size="icon"
+                            className="h-7 w-7"
+                            onClick={() => setViewItem(item)}
+                          >
+                            <Eye className="h-3.5 w-3.5" />
+                          </Button>
+                          <Button
+                            variant="ghost"
+                            size="icon"
+                            className="h-7 w-7 text-red-500 hover:text-red-600 hover:bg-red-50"
+                            onClick={() => setDeleteId(item.id)}
+                          >
+                            <Trash2 className="h-3.5 w-3.5" />
+                          </Button>
+                        </div>
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+
+            {/* Mobile Cards */}
+            <div className="md:hidden divide-y">
+              {data.map((item, idx) => (
+                <div key={item.id} className="p-3 space-y-2">
+                  <div className="flex items-start justify-between gap-2">
+                    <div className="min-w-0 flex-1">
+                      <p className="text-xs text-muted-foreground">#{(page - 1) * 50 + idx + 1}</p>
+                      <p className="font-semibold text-sm truncate">{item.organizationName || item.guestHouseName}</p>
+                      <p className="text-xs text-muted-foreground">{item.area}, {item.subCity}</p>
+                    </div>
+                    <div className="flex gap-1 shrink-0">
+                      <Button variant="ghost" size="icon" className="h-7 w-7" onClick={() => setViewItem(item)}>
+                        <Eye className="h-3.5 w-3.5" />
+                      </Button>
+                      <Button variant="ghost" size="icon" className="h-7 w-7 text-red-500" onClick={() => setDeleteId(item.id)}>
+                        <Trash2 className="h-3.5 w-3.5" />
+                      </Button>
                     </div>
                   </div>
-                  <div className="flex shrink-0 gap-1">
-                    <Button
-                      variant="ghost"
-                      size="icon"
-                      className="h-8 w-8"
-                      onClick={() => setViewItem(item)}
-                    >
-                      <Eye className="h-4 w-4" />
-                    </Button>
-                    <Button
-                      variant="ghost"
-                      size="icon"
-                      className="h-8 w-8 text-red-500 hover:text-red-600"
-                      onClick={() => setDeleteId(item.id)}
-                    >
-                      <Trash2 className="h-4 w-4" />
-                    </Button>
+                  <div className="grid grid-cols-2 gap-x-4 gap-y-1 text-xs">
+                    <div><span className="text-muted-foreground">Rooms:</span> <span className="font-medium">{item.numberOfRooms}</span></div>
+                    <div><span className="text-muted-foreground">License:</span> <span className="font-medium">{item.licenseType}</span></div>
+                    <div><span className="text-muted-foreground">Level:</span> <span className="font-medium">{item.licenseLevel}</span></div>
+                    <div><span className="text-muted-foreground">Owner:</span> <span className="font-medium truncate">{item.ownerName || '-'}</span></div>
+                    <div><span className="text-muted-foreground">Contact:</span> <span className="font-medium truncate">{item.contactName || '-'}</span></div>
+                    <div><span className="text-muted-foreground">Phone:</span> <a href={`tel:${item.contactPhone || ''}`} className="font-medium text-emerald-600">{item.contactPhone || '-'}</a></div>
                   </div>
+                  <p className="text-[10px] text-muted-foreground text-right">
+                    {item.surveyorName && <span>{item.surveyorName} - </span>}
+                    {new Date(item.createdAt).toLocaleDateString('en-GB')}
+                  </p>
                 </div>
-
-                <div className="mt-3 flex flex-wrap items-center gap-3 text-sm">
-                  <span className="flex items-center gap-1">
-                    <Bed className="h-3.5 w-3.5 text-emerald-600" />
-                    {item.numberOfRooms} rooms
-                  </span>
-                  <Badge variant="outline" className="text-xs">
-                    {item.licenseType}
-                  </Badge>
-                  <Badge variant="secondary" className="text-xs">
-                    {item.licenseLevel}
-                  </Badge>
-                </div>
-
-                <div className="mt-2 flex items-center gap-2">
-                  {renderStars(item.serviceRating)}
-                </div>
-
-                <div className="mt-2 flex flex-wrap gap-1.5">
-                  {item.hasWiFi && (
-                    <Badge variant="outline" className="gap-1 text-xs">
-                      <Wifi className="h-3 w-3" /> WiFi
-                    </Badge>
-                  )}
-                  {item.hasParking && (
-                    <Badge variant="outline" className="gap-1 text-xs">
-                      <Car className="h-3 w-3" /> Parking
-                    </Badge>
-                  )}
-                  {item.hasRestaurant && (
-                    <Badge variant="outline" className="gap-1 text-xs">
-                      <Utensils className="h-3 w-3" /> Restaurant
-                    </Badge>
-                  )}
-                  {item.hasHotWater && (
-                    <Badge variant="outline" className="gap-1 text-xs">
-                      <Droplets className="h-3 w-3" /> Hot Water
-                    </Badge>
-                  )}
-                </div>
-
-                {item.contactPhone && (
-                  <div className="mt-2 flex items-center gap-1 text-xs text-muted-foreground">
-                    <Phone className="h-3 w-3" />
-                    {item.contactPhone}
-                  </div>
-                )}
-              </CardContent>
-            </Card>
-          ))}
-        </div>
+              ))}
+            </div>
+          </CardContent>
+        </Card>
       )}
 
       {/* Pagination */}
@@ -517,129 +530,75 @@ export default function DataList({ refreshTrigger }: DataListProps) {
             <>
               <DialogHeader>
                 <DialogTitle className="text-xl">
-                  {viewItem.guestHouseName}
+                  {viewItem.organizationName || viewItem.guestHouseName}
                 </DialogTitle>
                 <DialogDescription>
                   {viewItem.area}, {viewItem.subCity}
                 </DialogDescription>
-                {viewItem.organizationName && (
-                  <p className="mt-1 text-sm text-muted-foreground">{viewItem.organizationName}</p>
-                )}
               </DialogHeader>
               <div className="space-y-4 pt-2">
                 <div className="grid grid-cols-2 gap-3">
                   <div className="rounded-lg bg-muted/50 p-3">
-                    <p className="text-xs text-muted-foreground">Rooms</p>
+                    <p className="text-xs text-muted-foreground">Rooms / Qubeettii</p>
                     <p className="text-lg font-semibold text-emerald-600">
                       {viewItem.numberOfRooms}
                     </p>
                   </div>
                   <div className="rounded-lg bg-muted/50 p-3">
-                    <p className="text-xs text-muted-foreground">Service Rating</p>
-                    <div className="mt-1">{renderStars(viewItem.serviceRating)}</div>
+                    <p className="text-xs text-muted-foreground">License No. / Lakofsaa Eyyema</p>
+                    <p className="text-lg font-semibold text-emerald-600">
+                      {viewItem.licenseNumber || '-'}
+                    </p>
                   </div>
                 </div>
 
                 <div className="space-y-2">
-                  <h4 className="text-sm font-semibold">License Details</h4>
+                  <h4 className="text-sm font-semibold">License Details / Odeeffannoo Eyyemaa</h4>
                   <div className="rounded-lg border p-3 space-y-1.5">
                     <div className="flex justify-between text-sm">
-                      <span className="text-muted-foreground">Type</span>
+                      <span className="text-muted-foreground">Type / Goossa Eyyema</span>
                       <span className="font-medium">{viewItem.licenseType}</span>
                     </div>
                     <div className="flex justify-between text-sm">
-                      <span className="text-muted-foreground">Level</span>
+                      <span className="text-muted-foreground">Level / Saddarkaa Eyyema</span>
                       <span className="font-medium">{viewItem.licenseLevel}</span>
                     </div>
-                    {viewItem.licenseNumber && (
-                      <div className="flex justify-between text-sm">
-                        <span className="text-muted-foreground">Number</span>
-                        <span className="font-medium">{viewItem.licenseNumber}</span>
-                      </div>
-                    )}
-                  </div>
-                </div>
-
-                {viewItem.specificAddress && (
-                  <div className="space-y-2">
-                    <h4 className="text-sm font-semibold">Address</h4>
-                    <p className="text-sm text-muted-foreground">
-                      {viewItem.specificAddress}
-                    </p>
-                  </div>
-                )}
-
-                <div className="space-y-2">
-                  <h4 className="text-sm font-semibold">Amenities</h4>
-                  <div className="flex flex-wrap gap-2">
-                    {viewItem.hasWiFi && (
-                      <Badge variant="outline" className="gap-1">
-                        <Wifi className="h-3 w-3" /> WiFi
-                      </Badge>
-                    )}
-                    {viewItem.hasParking && (
-                      <Badge variant="outline" className="gap-1">
-                        <Car className="h-3 w-3" /> Parking
-                      </Badge>
-                    )}
-                    {viewItem.hasRestaurant && (
-                      <Badge variant="outline" className="gap-1">
-                        <Utensils className="h-3 w-3" /> Restaurant
-                      </Badge>
-                    )}
-                    {viewItem.hasHotWater && (
-                      <Badge variant="outline" className="gap-1">
-                        <Droplets className="h-3 w-3" /> Hot Water
-                      </Badge>
-                    )}
-                    {!viewItem.hasWiFi &&
-                      !viewItem.hasParking &&
-                      !viewItem.hasRestaurant &&
-                      !viewItem.hasHotWater && (
-                        <span className="text-sm text-muted-foreground">
-                          None specified
-                        </span>
-                      )}
                   </div>
                 </div>
 
                 <div className="space-y-2">
-                  <h4 className="text-sm font-semibold">Contact Details</h4>
+                  <h4 className="text-sm font-semibold">Address / Teessoo</h4>
+                  <p className="text-sm text-muted-foreground rounded-lg border p-3">
+                    {viewItem.specificAddress}
+                  </p>
+                </div>
+
+                <div className="space-y-2">
+                  <h4 className="text-sm font-semibold">Contact Details / Odeeffannoo Quunnamtii</h4>
                   <div className="rounded-lg border p-3 space-y-1.5">
-                    {viewItem.ownerName && (
-                      <div className="flex justify-between text-sm">
-                        <span className="text-muted-foreground">Owner</span>
-                        <span className="font-medium">{viewItem.ownerName}</span>
-                      </div>
-                    )}
-                    {viewItem.contactName && (
-                      <div className="flex justify-between text-sm">
-                        <span className="text-muted-foreground">Contact</span>
-                        <span className="font-medium">{viewItem.contactName}</span>
-                      </div>
-                    )}
-                    {viewItem.contactPhone && (
-                      <div className="flex justify-between text-sm">
-                        <span className="text-muted-foreground">Phone</span>
-                        <span className="font-medium">{viewItem.contactPhone}</span>
-                      </div>
-                    )}
+                    <div className="flex justify-between text-sm">
+                      <span className="text-muted-foreground">Owner / Abbaa Qaabeyee</span>
+                      <span className="font-medium">{viewItem.ownerName || '-'}</span>
+                    </div>
+                    <div className="flex justify-between text-sm">
+                      <span className="text-muted-foreground">Contact / Nama Adadura Qunnamnu</span>
+                      <span className="font-medium">{viewItem.contactName || '-'}</span>
+                    </div>
+                    <div className="flex justify-between text-sm">
+                      <span className="text-muted-foreground">Phone / Bilbila</span>
+                      <span className="font-medium">
+                        <a href={`tel:${viewItem.contactPhone || ''}`} className="text-emerald-600 hover:underline">
+                          {viewItem.contactPhone || '-'}
+                        </a>
+                      </span>
+                    </div>
                   </div>
                 </div>
-
-                {viewItem.additionalServices && (
-                  <div className="space-y-2">
-                    <h4 className="text-sm font-semibold">Additional Services</h4>
-                    <p className="text-sm text-muted-foreground">
-                      {viewItem.additionalServices}
-                    </p>
-                  </div>
-                )}
 
                 {viewItem.surveyorName && (
                   <p className="text-xs text-muted-foreground">
                     Surveyed by: {viewItem.surveyorName} on{' '}
-                    {new Date(viewItem.createdAt).toLocaleDateString()}
+                    {new Date(viewItem.createdAt).toLocaleDateString('en-GB')}
                   </p>
                 )}
               </div>
