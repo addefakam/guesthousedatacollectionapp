@@ -25,7 +25,9 @@ import {
   Star,
   Loader2,
   RotateCcw,
+  ShieldCheck,
 } from 'lucide-react';
+import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
 import {
   locationData,
   getAreasForSubCity,
@@ -46,6 +48,7 @@ export default function SurveyForm({ onSubmit, surveyorName, surveyorId }: Surve
   const [areas, setAreas] = useState<string[]>([]);
   const [rating, setRating] = useState(0);
   const [hoverRating, setHoverRating] = useState(0);
+  const [dataConfirmed, setDataConfirmed] = useState('');
 
   const emptyForm = {
     guestHouseName: '',
@@ -108,6 +111,15 @@ export default function SurveyForm({ onSubmit, surveyorName, surveyorId }: Surve
       return;
     }
 
+    if (dataConfirmed !== 'yes') {
+      toast({
+        title: 'Confirmation Required',
+        description: 'Please confirm that the data provided is true and authenticated.',
+        variant: 'destructive',
+      });
+      return;
+    }
+
     setIsSubmitting(true);
 
     try {
@@ -136,6 +148,7 @@ export default function SurveyForm({ onSubmit, surveyorName, surveyorId }: Surve
       setSelectedSubCity('');
       setAreas([]);
       setRating(0);
+      setDataConfirmed('');
       onSubmit();
     } catch (error) {
       toast({
@@ -153,6 +166,7 @@ export default function SurveyForm({ onSubmit, surveyorName, surveyorId }: Surve
     setSelectedSubCity('');
     setAreas([]);
     setRating(0);
+    setDataConfirmed('');
   };
 
   return (
@@ -238,13 +252,12 @@ export default function SurveyForm({ onSubmit, surveyorName, surveyorId }: Surve
 
           <div className="space-y-2">
             <Label htmlFor="specificAddress">Specific Address</Label>
-            <Textarea
+            <Input
               id="specificAddress"
               name="specificAddress"
               placeholder="Street name, landmark, building number..."
               value={formData.specificAddress}
               onChange={handleChange}
-              rows={2}
             />
           </div>
         </CardContent>
@@ -369,6 +382,32 @@ export default function SurveyForm({ onSubmit, surveyorName, surveyorId }: Surve
             <Label htmlFor="contactPhone">Phone Number</Label>
             <Input id="contactPhone" name="contactPhone" type="tel" placeholder="e.g., +251 91 234 5678" value={formData.contactPhone} onChange={handleChange} />
           </div>
+        </CardContent>
+      </Card>
+
+      <Card>
+        <CardHeader className="pb-3">
+          <CardTitle className="flex items-center gap-2 text-lg">
+            <ShieldCheck className="h-5 w-5 text-blue-600" />
+            Data Confirmation
+          </CardTitle>
+          <CardDescription>Please confirm the authenticity of the data</CardDescription>
+        </CardHeader>
+        <CardContent>
+          <RadioGroup value={dataConfirmed} onValueChange={setDataConfirmed} className="space-y-3">
+            <div className="flex items-start space-x-3 rounded-lg border border-emerald-200 bg-emerald-50 p-3">
+              <RadioGroupItem value="yes" id="confirm-yes" className="mt-0.5" />
+              <Label htmlFor="confirm-yes" className="cursor-pointer leading-snug">
+                I confirm that the data provided is <span className="font-semibold">true and authenticated</span>
+              </Label>
+            </div>
+            <div className="flex items-start space-x-3 rounded-lg border border-red-200 bg-red-50 p-3">
+              <RadioGroupItem value="no" id="confirm-no" className="mt-0.5" />
+              <Label htmlFor="confirm-no" className="cursor-pointer leading-snug">
+                The data may not be verified
+              </Label>
+            </div>
+          </RadioGroup>
         </CardContent>
       </Card>
 
