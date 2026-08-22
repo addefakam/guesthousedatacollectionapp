@@ -1,0 +1,17 @@
+{
+  "name": "Bishoftu Guest House Survey",
+  "short_name": "BGH Survey",
+  "description": "Mobile data collection for guest house service survey in Bishoftu City",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#ffffff",
+  "theme_color": "#059669",
+  "icons": [
+    {
+      "src": "/icon.png",
+      "sizes": "1024x1024",
+      "type": "image/png",
+      "purpose": "any maskable"
+    }
+  ]
+}

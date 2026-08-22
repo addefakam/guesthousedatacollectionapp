@@ -18,8 +18,10 @@ export const metadata: Metadata = {
   title: 'Bishoftu Guest House Survey - Data Collection',
   description: 'Mobile-based data collection system for guest house service survey in Bishoftu City, covering sub-cities Dukam, Chelaleka, and Debaayyuu.',
   icons: {
-    icon: 'https://z-cdn.chatglm.cn/z-ai/static/logo.svg',
+    icon: '/icon.png',
+    apple: '/icon.png',
   },
+  manifest: '/manifest.json',
 };
 
 export default function RootLayout({
