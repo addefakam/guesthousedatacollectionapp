@@ -99,7 +99,7 @@ export default function SurveyForm({ onSubmit, surveyorName, surveyorId }: Surve
   const validateStep = (step: number): boolean => {
     switch (step) {
       case 1:
-        if (!formData.guestHouseName || !formData.organizationName || !formData.subCity || !formData.area || !formData.specificAddress) {
+        if (!formData.organizationName || !formData.subCity || !formData.area || !formData.specificAddress) {
           toast({ title: 'Field Missing / Qabiyyee Hin Jiru', description: 'All fields in this step are required / Galii hundinuu barbaachisaadha', variant: 'destructive' });
           return false;
         }
@@ -162,7 +162,7 @@ export default function SurveyForm({ onSubmit, surveyorName, surveyorId }: Surve
 
       toast({
         title: 'Survey Submitted! / Galma Qabame!',
-        description: `${formData.guestHouseName} recorded successfully / galmeen safiisan argame`,
+        description: `${formData.organizationName} recorded successfully / galmeen safiisan argame`,
       });
 
       setFormData(emptyForm);
@@ -191,17 +191,16 @@ export default function SurveyForm({ onSubmit, surveyorName, surveyorId }: Surve
   };
 
   const reviewItems = [
-    { label: 'Name / Maqaa', value: formData.guestHouseName },
     { label: 'Organization / Dhaabbataa', value: formData.organizationName },
-    { label: 'Sub-City / Magaalaa Digdamii', value: formData.subCity },
+    { label: 'Sub-City / Kuttaa Maggalaa', value: formData.subCity },
     { label: 'Area / Kebele', value: formData.area },
     { label: 'Address / Teessoo', value: formData.specificAddress },
     { label: 'Rooms / Qubeettii', value: formData.numberOfRooms },
-    { label: 'License Type / Gosa Laisansii', value: formData.licenseType },
+    { label: 'License Type / Goossa Eyyema', value: formData.licenseType },
     { label: 'License Level / Saddarkaa Eyeemaa', value: formData.licenseLevel },
-    { label: 'License No. / Lakkoofsa Laisansii', value: formData.licenseNumber },
+    { label: 'License No. / Lakofsaa Eyyema', value: formData.licenseNumber },
     { label: 'Owner / Abbaa Qaabeyee', value: formData.ownerName },
-    { label: 'Contact Person / Nama Quunnamu', value: formData.contactName },
+    { label: 'Contact Person / Nama Adadura Qunnamnu', value: formData.contactName },
     { label: 'Phone / Bilbila', value: formData.contactPhone },
   ];
 
@@ -270,22 +269,6 @@ export default function SurveyForm({ onSubmit, surveyorName, surveyorId }: Surve
               </CardHeader>
               <CardContent className="space-y-4">
                 <div className="space-y-2">
-                  <Label htmlFor="guestHouseName">
-                    Name
-                    <br />
-                    <span className="text-sm font-normal text-muted-foreground">Maqaa</span> <span className="text-red-500">*</span>
-                  </Label>
-                  <Input
-                    id="guestHouseName"
-                    name="guestHouseName"
-                    placeholder="e.g., Bishoftu Paradise Lodge"
-                    value={formData.guestHouseName}
-                    onChange={handleChange}
-                    required
-                  />
-                </div>
-
-                <div className="space-y-2">
                   <Label htmlFor="organizationName">
                     Organization Name
                     <br />
@@ -306,7 +289,7 @@ export default function SurveyForm({ onSubmit, surveyorName, surveyorId }: Surve
                     <Label htmlFor="subCity">
                       Sub-City
                       <br />
-                      <span className="text-sm font-normal text-muted-foreground">Magaalaa Digdamii</span> <span className="text-red-500">*</span>
+                      <span className="text-sm font-normal text-muted-foreground">Kuttaa Maggalaa</span> <span className="text-red-500">*</span>
                     </Label>
                     <Select value={formData.subCity} onValueChange={handleSubCityChange}>
                       <SelectTrigger id="subCity">
@@ -371,7 +354,7 @@ export default function SurveyForm({ onSubmit, surveyorName, surveyorId }: Surve
                   <FileText className="h-5 w-5 text-blue-600" />
                   Capacity & License
                   <br />
-                  <span className="text-base font-normal text-muted-foreground">Qubeettii fi Laisansii</span>
+                  <span className="text-base font-normal text-muted-foreground">Bayyinnafee fi Eyyemma</span>
                 </CardTitle>
                 <CardDescription>Room capacity and licensing information</CardDescription>
               </CardHeader>
@@ -399,7 +382,7 @@ export default function SurveyForm({ onSubmit, surveyorName, surveyorId }: Surve
                     <Label>
                       License Type
                       <br />
-                      <span className="text-sm font-normal text-muted-foreground">Gosa Laisansii</span> <span className="text-red-500">*</span>
+                      <span className="text-sm font-normal text-muted-foreground">Goossa Eyyema</span> <span className="text-red-500">*</span>
                     </Label>
                     <Select value={formData.licenseType} onValueChange={(v) => handleSelectChange('licenseType', v)}>
                       <SelectTrigger><SelectValue placeholder="Select / Filadhu" /></SelectTrigger>
@@ -431,7 +414,7 @@ export default function SurveyForm({ onSubmit, surveyorName, surveyorId }: Surve
                   <Label htmlFor="licenseNumber">
                     License Number
                     <br />
-                    <span className="text-sm font-normal text-muted-foreground">Lakkoofsa Laisansii</span> <span className="text-red-500">*</span>
+                    <span className="text-sm font-normal text-muted-foreground">Lakofsaa Eyyema</span> <span className="text-red-500">*</span>
                   </Label>
                   <Input
                     id="licenseNumber"
@@ -477,7 +460,7 @@ export default function SurveyForm({ onSubmit, surveyorName, surveyorId }: Surve
                   <Label htmlFor="contactName">
                     Contact Person
                     <br />
-                    <span className="text-sm font-normal text-muted-foreground">Nama Quunnamu</span> <span className="text-red-500">*</span>
+                    <span className="text-sm font-normal text-muted-foreground">Nama Adadura Qunnamnu</span> <span className="text-red-500">*</span>
                   </Label>
                   <Input
                     id="contactName"
@@ -545,7 +528,7 @@ export default function SurveyForm({ onSubmit, surveyorName, surveyorId }: Surve
                       <Label htmlFor="confirm-yes" className="cursor-pointer leading-relaxed">
                         <span className="font-bold text-emerald-800">I confirm that the data provided is true and authenticated</span>
                         <br />
-                        <span className="text-sm font-semibold text-emerald-700">Daataan kennaman dhugaa fi mirkanaa'e ta'a jechuun mirkanaa'a</span>
+                        <span className="text-sm font-semibold text-emerald-700">Daataan keneenaa dhagafee merkanawa ta'uu Issaa raaggaa Nibaanaa</span>
                       </Label>
                     </div>
                   </RadioGroup>
