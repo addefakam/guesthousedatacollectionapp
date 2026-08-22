@@ -5,7 +5,6 @@ export async function POST(request: NextRequest) {
   try {
     const body = await request.json();
     const {
-      guestHouseName,
       organizationName,
       subCity,
       area,
@@ -27,16 +26,17 @@ export async function POST(request: NextRequest) {
       surveyorId,
     } = body;
 
-    if (!guestHouseName || !subCity || !area || !numberOfRooms || !licenseType || !licenseLevel || !serviceRating) {
+    // Validate required fields from the 4-step form
+    if (!organizationName || !subCity || !area || !specificAddress || !numberOfRooms || !licenseType || !licenseLevel || !licenseNumber || !ownerName || !contactName || !contactPhone) {
       return NextResponse.json(
-        { error: 'Missing required fields' },
+        { error: 'Missing required fields', missing: { organizationName: !organizationName, subCity: !subCity, area: !area, specificAddress: !specificAddress, numberOfRooms: !numberOfRooms, licenseType: !licenseType, licenseLevel: !licenseLevel, licenseNumber: !licenseNumber, ownerName: !ownerName, contactName: !contactName, contactPhone: !contactPhone } },
         { status: 400 }
       );
     }
 
     const guestHouse = await db.guestHouse.create({
       data: {
-        guestHouseName,
+        guestHouseName: organizationName, // Use organization name as guest house name
         organizationName: organizationName || null,
         subCity,
         area,
@@ -45,7 +45,7 @@ export async function POST(request: NextRequest) {
         licenseType,
         licenseLevel,
         licenseNumber: licenseNumber || null,
-        serviceRating: Number(serviceRating),
+        serviceRating: Number(serviceRating) || 0,
         contactPhone: contactPhone || null,
         contactName: contactName || null,
         ownerName: ownerName || null,
@@ -63,7 +63,7 @@ export async function POST(request: NextRequest) {
   } catch (error) {
     console.error('Error creating guest house:', error);
     return NextResponse.json(
-      { error: 'Failed to create guest house record' },
+      { error: 'Failed to create guest house record', detail: error instanceof Error ? error.message : String(error) },
       { status: 500 }
     );
   }
