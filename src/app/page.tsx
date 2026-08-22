@@ -3,7 +3,7 @@
 import { useState } from 'react';
 import { useSession } from 'next-auth/react';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { ClipboardList, BarChart3, Database, Shield, LogOut } from 'lucide-react';
+import { ClipboardList, BarChart3, Database, Shield, LogOut, Wifi, WifiOff, RefreshCw, CloudOff } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { signOut } from 'next-auth/react';
 import SurveyForm from '@/components/guesthouse/SurveyForm';
@@ -12,11 +12,17 @@ import Dashboard from '@/components/guesthouse/Dashboard';
 import LoginForm from '@/components/LoginForm';
 import AdminPanel from '@/components/AdminPanel';
 import { useAuth } from '@/components/AuthProvider';
+import { useOfflineSync } from '@/hooks/useOfflineSync';
 
 export default function Home() {
   const { status } = useSession();
   const { isAdmin, userName, userId } = useAuth();
   const [refreshTrigger, setRefreshTrigger] = useState(0);
+  const { isOnline, pendingCount, isSyncing, syncPendingSurveys, saveOffline } = useOfflineSync();
+
+  const handleSurveySubmit = () => {
+    setRefreshTrigger((t) => t + 1);
+  };
 
   if (status === 'loading') {
     return (
@@ -59,16 +65,49 @@ export default function Home() {
               </p>
             </div>
           </div>
-          <Button
-            variant="ghost"
-            size="icon"
-            onClick={() => signOut({ callbackUrl: '/' })}
-            title="Logout"
-          >
-            <LogOut className="h-5 w-5" />
-          </Button>
+          <div className="flex items-center gap-2">
+            {pendingCount > 0 && isOnline && (
+              <Button
+                variant="outline"
+                size="sm"
+                className="relative border-amber-400 text-amber-700 hover:bg-amber-50"
+                onClick={() => syncPendingSurveys().then(() => setRefreshTrigger((t) => t + 1))}
+                disabled={isSyncing}
+              >
+                <RefreshCw className={`mr-1 h-3.5 w-3.5 ${isSyncing ? 'animate-spin' : ''}`} />
+                <span className="text-xs">{pendingCount}</span>
+              </Button>
+            )}
+            <Button
+              variant="ghost"
+              size="icon"
+              onClick={() => signOut({ callbackUrl: '/' })}
+              title="Logout"
+            >
+              <LogOut className="h-5 w-5" />
+            </Button>
+          </div>
         </div>
       </header>
+
+      {!isOnline && (
+        <div className="flex items-center justify-center gap-2 bg-amber-500 px-4 py-2 text-center text-sm font-medium text-white">
+          <CloudOff className="h-4 w-4" />
+          <span>Offline Mode / Offliin Jira</span>
+          {pendingCount > 0 && (
+            <span className="rounded-full bg-white/20 px-2 py-0.5 text-xs">
+              {pendingCount} pending / hanqachu
+            </span>
+          )}
+        </div>
+      )}
+
+      {isOnline && isSyncing && (
+        <div className="flex items-center justify-center gap-2 bg-emerald-500 px-4 py-1.5 text-center text-sm font-medium text-white">
+          <RefreshCw className="h-4 w-4 animate-spin" />
+          <span>Syncing... / Dhiheenyaa jira...</span>
+        </div>
+      )}
 
       <main className="mx-auto max-w-2xl px-4 py-4 pb-24">
         <Tabs defaultValue="survey" className="w-full">
@@ -88,9 +127,11 @@ export default function Home() {
 
           <TabsContent value="survey">
             <SurveyForm
-              onSubmit={() => setRefreshTrigger((t) => t + 1)}
+              onSubmit={handleSurveySubmit}
               surveyorName={userName || ''}
               surveyorId={userId || ''}
+              isOnline={isOnline}
+              onOfflineSave={saveOffline}
             />
           </TabsContent>
 
@@ -111,8 +152,12 @@ export default function Home() {
       </main>
 
       <footer className="fixed bottom-0 left-0 right-0 border-t bg-white">
-        <div className="mx-auto max-w-2xl px-4 py-2 text-center text-xs text-muted-foreground">
-          Bishoftu City Guest House Survey
+        <div className="mx-auto flex max-w-2xl items-center justify-between px-4 py-2">
+          <span className="text-xs text-muted-foreground">Bishoftu City Guest House Survey</span>
+          <span className={`flex items-center gap-1 text-xs ${isOnline ? 'text-emerald-600' : 'text-amber-500'}`}>
+            {isOnline ? <Wifi className="h-3 w-3" /> : <WifiOff className="h-3 w-3" />}
+            {isOnline ? 'Online' : 'Offline'}
+          </span>
         </div>
       </footer>
     </div>

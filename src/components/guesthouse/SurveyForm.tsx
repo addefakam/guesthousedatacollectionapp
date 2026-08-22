@@ -44,6 +44,8 @@ interface SurveyFormProps {
   onSubmit: () => void;
   surveyorName: string;
   surveyorId: string;
+  isOnline?: boolean;
+  onOfflineSave?: (data: Record<string, unknown>) => Promise<boolean>;
 }
 
 const STEPS = [
@@ -53,7 +55,7 @@ const STEPS = [
   { id: 4, title: 'Review & Confirm', titleOr: 'Ilaali fi Mirkanaa', icon: Eye },
 ];
 
-export default function SurveyForm({ onSubmit, surveyorName, surveyorId }: SurveyFormProps) {
+export default function SurveyForm({ onSubmit, surveyorName, surveyorId, isOnline = true, onOfflineSave }: SurveyFormProps) {
   const { toast } = useToast();
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [currentStep, setCurrentStep] = useState(1);
@@ -137,47 +139,92 @@ export default function SurveyForm({ onSubmit, surveyorName, surveyorId }: Surve
     setCurrentStep((s) => Math.max(s - 1, 1));
   };
 
+  const resetAfterSubmit = () => {
+    setFormData(emptyForm);
+    setSelectedSubCity('');
+    setAreas([]);
+    setDataConfirmed('');
+    setCurrentStep(1);
+  };
+
+  const payload = {
+    ...formData,
+    serviceRating: 0,
+    surveyorName,
+    surveyorId,
+  };
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!validateStep(currentStep)) return;
 
     setIsSubmitting(true);
 
-    try {
-      const response = await fetch('/api/guesthouses', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          ...formData,
-          serviceRating: 0,
-          surveyorName,
-          surveyorId,
-        }),
-      });
+    if (isOnline) {
+      try {
+        const response = await fetch('/api/guesthouses', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(payload),
+        });
 
-      if (!response.ok) {
-        const err = await response.json();
-        throw new Error(err.error || 'Failed to submit');
+        if (!response.ok) {
+          const err = await response.json();
+          throw new Error(err.error || 'Failed to submit');
+        }
+
+        toast({
+          title: 'Survey Submitted! / Galma Qabame!',
+          description: `${formData.organizationName} recorded successfully / galmeen safiisan argame`,
+        });
+
+        resetAfterSubmit();
+        onSubmit();
+      } catch (error) {
+        if (onOfflineSave) {
+          const saved = await onOfflineSave(payload);
+          if (saved) {
+            toast({
+              title: 'Saved Offline / Offliin Kuusame',
+              description: 'Will sync when connected / Netiirkii qunnamaa waanin dhiheenya',
+            });
+            resetAfterSubmit();
+            onSubmit();
+          } else {
+            toast({
+              title: 'Submission Failed / Galmeen Hin Dhufne',
+              description: error instanceof Error ? error.message : 'Please try again / Dabalataan yaali',
+              variant: 'destructive',
+            });
+          }
+        } else {
+          toast({
+            title: 'Submission Failed / Galmeen Hin Dhufne',
+            description: error instanceof Error ? error.message : 'Please try again / Dabalataan yaali',
+            variant: 'destructive',
+          });
+        }
+      } finally {
+        setIsSubmitting(false);
       }
-
-      toast({
-        title: 'Survey Submitted! / Galma Qabame!',
-        description: `${formData.organizationName} recorded successfully / galmeen safiisan argame`,
-      });
-
-      setFormData(emptyForm);
-      setSelectedSubCity('');
-      setAreas([]);
-      setDataConfirmed('');
-      setCurrentStep(1);
-      onSubmit();
-    } catch (error) {
-      toast({
-        title: 'Submission Failed / Galmeen Hin Dhufne',
-        description: error instanceof Error ? error.message : 'Please try again / Dabalataan yaali',
-        variant: 'destructive',
-      });
-    } finally {
+    } else {
+      if (onOfflineSave) {
+        const saved = await onOfflineSave(payload);
+        if (saved) {
+          toast({
+            title: 'Saved Offline / Offliin Kuusame',
+            description: 'Will sync when connected / Netiirkii qunnamaa waanin dhiheenya',
+          });
+          resetAfterSubmit();
+          onSubmit();
+        } else {
+          toast({
+            title: 'Save Failed / Hin Kuusanne',
+            description: 'Storage full or unavailable / Qabiyyee dhiphaachaa ykn hin jiru',
+            variant: 'destructive',
+          });
+        }
+      }
       setIsSubmitting(false);
     }
   };
