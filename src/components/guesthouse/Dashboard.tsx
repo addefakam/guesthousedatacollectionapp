@@ -31,7 +31,7 @@ interface Stats {
   total: number;
   subCityStats: SubCityStat[];
   licenseStats: LicenseStat[];
-  totalBeds: number;
+  totalRooms: number;
   avgRating: number;
 }
 
@@ -130,9 +130,9 @@ export default function Dashboard() {
                 <Bed className="h-5 w-5 text-blue-600" />
               </div>
               <div>
-                <p className="text-xs text-muted-foreground">Total Beds</p>
+                <p className="text-xs text-muted-foreground">Total Rooms</p>
                 <p className="text-2xl font-bold">
-                  {stats.totalBeds.toLocaleString()}
+                  {stats.totalRooms.toLocaleString()}
                 </p>
               </div>
             </div>

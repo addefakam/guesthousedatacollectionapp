@@ -16,7 +16,7 @@ model GuestHouse {
   subCity          String
   area             String
   specificAddress  String
-  maxBeds          Int
+  numberOfRooms    Int
   licenseType      String
   licenseLevel     String
   licenseNumber    String?

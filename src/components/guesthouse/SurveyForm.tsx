@@ -51,7 +51,7 @@ export default function SurveyForm({ onSubmit }: SurveyFormProps) {
     subCity: '',
     area: '',
     specificAddress: '',
-    maxBeds: '',
+    numberOfRooms: '',
     licenseType: '',
     licenseLevel: '',
     licenseNumber: '',
@@ -134,7 +134,7 @@ export default function SurveyForm({ onSubmit }: SurveyFormProps) {
         subCity: '',
         area: '',
         specificAddress: '',
-        maxBeds: '',
+        numberOfRooms: '',
         licenseType: '',
         licenseLevel: '',
         licenseNumber: '',
@@ -260,21 +260,21 @@ export default function SurveyForm({ onSubmit }: SurveyFormProps) {
         <CardHeader className="pb-3">
           <CardTitle className="text-lg">Capacity & License</CardTitle>
           <CardDescription>
-            Bed capacity and licensing information
+            Room capacity and licensing information
           </CardDescription>
         </CardHeader>
         <CardContent className="space-y-4">
           <div className="space-y-2">
-            <Label htmlFor="maxBeds">
-              Maximum Number of Beds <span className="text-red-500">*</span>
+            <Label htmlFor="numberOfRooms">
+              Number of Rooms <span className="text-red-500">*</span>
             </Label>
             <Input
-              id="maxBeds"
-              name="maxBeds"
+              id="numberOfRooms"
+              name="numberOfRooms"
               type="number"
               min="1"
-              placeholder="e.g., 50"
-              value={formData.maxBeds}
+              placeholder="e.g., 20"
+              value={formData.numberOfRooms}
               onChange={handleChange}
               required
             />
@@ -520,7 +520,7 @@ export default function SurveyForm({ onSubmit }: SurveyFormProps) {
               subCity: '',
               area: '',
               specificAddress: '',
-              maxBeds: '',
+              numberOfRooms: '',
               licenseType: '',
               licenseLevel: '',
               licenseNumber: '',

@@ -9,7 +9,7 @@ export async function POST(request: NextRequest) {
       subCity,
       area,
       specificAddress,
-      maxBeds,
+      numberOfRooms,
       licenseType,
       licenseLevel,
       licenseNumber,
@@ -25,7 +25,7 @@ export async function POST(request: NextRequest) {
       surveyorName,
     } = body;
 
-    if (!guestHouseName || !subCity || !area || !maxBeds || !licenseType || !licenseLevel || !serviceRating) {
+    if (!guestHouseName || !subCity || !area || !numberOfRooms || !licenseType || !licenseLevel || !serviceRating) {
       return NextResponse.json(
         { error: 'Missing required fields' },
         { status: 400 }
@@ -38,7 +38,7 @@ export async function POST(request: NextRequest) {
         subCity,
         area,
         specificAddress: specificAddress || '',
-        maxBeds: Number(maxBeds),
+        numberOfRooms: Number(numberOfRooms),
         licenseType,
         licenseLevel,
         licenseNumber: licenseNumber || null,

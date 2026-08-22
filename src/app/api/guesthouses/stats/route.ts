@@ -3,7 +3,7 @@ import { NextResponse } from 'next/server';
 
 export async function GET() {
   try {
-    const [total, subCityStats, licenseStats, totalBeds, avgRating] =
+    const [total, subCityStats, licenseStats, totalRooms, avgRating] =
       await Promise.all([
         db.guestHouse.count(),
         db.guestHouse.groupBy({
@@ -16,7 +16,7 @@ export async function GET() {
           _count: true,
         }),
         db.guestHouse.aggregate({
-          _sum: { maxBeds: true },
+          _sum: { numberOfRooms: true },
         }),
         db.guestHouse.aggregate({
           _avg: { serviceRating: true },
@@ -27,7 +27,7 @@ export async function GET() {
       total,
       subCityStats,
       licenseStats,
-      totalBeds: totalBeds._sum.maxBeds || 0,
+      totalRooms: totalRooms._sum.numberOfRooms || 0,
       avgRating: avgRating._avg.serviceRating
         ? Math.round(avgRating._avg.serviceRating * 10) / 10
         : 0,

@@ -48,6 +48,7 @@ export const LICENSE_TYPES = [
   'Lodge',
   'Hostel',
   'Motel',
+  'Resort',
   'Bed & Breakfast',
 ];
 

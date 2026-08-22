@@ -63,7 +63,7 @@ interface GuestHouse {
   subCity: string;
   area: string;
   specificAddress: string;
-  maxBeds: number;
+  numberOfRooms: number;
   licenseType: string;
   licenseLevel: string;
   licenseNumber: string | null;
@@ -369,7 +369,7 @@ export default function DataList({ refreshTrigger }: DataListProps) {
                 <div className="mt-3 flex flex-wrap items-center gap-3 text-sm">
                   <span className="flex items-center gap-1">
                     <Bed className="h-3.5 w-3.5 text-emerald-600" />
-                    {item.maxBeds} beds
+                    {item.numberOfRooms} rooms
                   </span>
                   <Badge variant="outline" className="text-xs">
                     {item.licenseType}
@@ -484,9 +484,9 @@ export default function DataList({ refreshTrigger }: DataListProps) {
               <div className="space-y-4 pt-2">
                 <div className="grid grid-cols-2 gap-3">
                   <div className="rounded-lg bg-muted/50 p-3">
-                    <p className="text-xs text-muted-foreground">Max Beds</p>
+                    <p className="text-xs text-muted-foreground">Rooms</p>
                     <p className="text-lg font-semibold text-emerald-600">
-                      {viewItem.maxBeds}
+                      {viewItem.numberOfRooms}
                     </p>
                   </div>
                   <div className="rounded-lg bg-muted/50 p-3">
