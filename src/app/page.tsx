@@ -48,8 +48,6 @@ export default function Home() {
       ]
     : [
         { value: 'survey', label: 'Survey', icon: <ClipboardList className="h-4 w-4" /> },
-        { value: 'data', label: 'Records', icon: <Database className="h-4 w-4" /> },
-        { value: 'dashboard', label: 'Stats', icon: <BarChart3 className="h-4 w-4" /> },
       ];
 
   return (
@@ -111,7 +109,7 @@ export default function Home() {
 
       <main className="mx-auto max-w-2xl px-4 py-4 pb-24">
         <Tabs defaultValue="survey" className="w-full">
-          <TabsList className={tabs.length === 4 ? 'mb-4 grid w-full grid-cols-4' : 'mb-4 grid w-full grid-cols-3'}>
+          <TabsList className={isAdmin ? 'mb-4 grid w-full grid-cols-4' : 'mb-4 w-full'}>
             {tabs.map((tab) => (
               <TabsTrigger
                 key={tab.value}
