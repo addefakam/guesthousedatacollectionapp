@@ -324,7 +324,7 @@ export default function SurveyForm({ onSubmit, surveyorName, surveyorId, isOnlin
                   <Input
                     id="organizationName"
                     name="organizationName"
-                    placeholder="e.g., Bishoftu Tourism Corp."
+                    placeholder="e.g., GOLD MARK HOTEL"
                     value={formData.organizationName}
                     onChange={handleChange}
                     required
