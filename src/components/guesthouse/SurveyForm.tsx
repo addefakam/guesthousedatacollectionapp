@@ -173,7 +173,7 @@ export default function SurveyForm({ onSubmit, surveyorName, surveyorId }: Surve
         <CardContent className="space-y-4">
           <div className="space-y-2">
             <Label htmlFor="guestHouseName">
-              Guest House / Hotel Name <span className="text-red-500">*</span>
+              Name <span className="text-red-500">*</span>
             </Label>
             <Input
               id="guestHouseName"
