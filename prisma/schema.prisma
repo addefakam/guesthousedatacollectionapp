@@ -1,0 +1,35 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "sqlite"
+  url      = env("DATABASE_URL")
+}
+
+model GuestHouse {
+  id               String   @id @default(cuid())
+  guestHouseName   String
+  subCity          String
+  area             String
+  specificAddress  String
+  maxBeds          Int
+  licenseType      String
+  licenseLevel     String
+  licenseNumber    String?
+  serviceRating    Int
+  contactPhone     String?
+  contactName      String?
+  ownerName        String?
+  hasRestaurant    Boolean  @default(false)
+  hasParking       Boolean  @default(false)
+  hasWiFi          Boolean  @default(false)
+  hasHotWater      Boolean  @default(false)
+  additionalServices String?
+  surveyorName     String?
+  createdAt        DateTime @default(now())
+  updatedAt        DateTime @updatedAt
+}
