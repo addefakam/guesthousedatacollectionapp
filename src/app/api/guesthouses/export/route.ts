@@ -25,6 +25,7 @@ export async function GET(request: NextRequest) {
 
     const headers = [
       'Guest House Name',
+      'Organization Name',
       'Sub-City',
       'Area/Kebele',
       'Specific Address',
@@ -47,6 +48,7 @@ export async function GET(request: NextRequest) {
 
     const rows = guestHouses.map((gh) => [
       gh.guestHouseName,
+      gh.organizationName || '',
       gh.subCity,
       gh.area,
       gh.specificAddress,

@@ -6,6 +6,7 @@ export async function POST(request: NextRequest) {
     const body = await request.json();
     const {
       guestHouseName,
+      organizationName,
       subCity,
       area,
       specificAddress,
@@ -23,6 +24,7 @@ export async function POST(request: NextRequest) {
       hasHotWater,
       additionalServices,
       surveyorName,
+      surveyorId,
     } = body;
 
     if (!guestHouseName || !subCity || !area || !numberOfRooms || !licenseType || !licenseLevel || !serviceRating) {
@@ -35,6 +37,7 @@ export async function POST(request: NextRequest) {
     const guestHouse = await db.guestHouse.create({
       data: {
         guestHouseName,
+        organizationName: organizationName || null,
         subCity,
         area,
         specificAddress: specificAddress || '',
@@ -52,6 +55,7 @@ export async function POST(request: NextRequest) {
         hasHotWater: Boolean(hasHotWater),
         additionalServices: additionalServices || null,
         surveyorName: surveyorName || null,
+        surveyorId: surveyorId || null,
       },
     });
 
@@ -85,6 +89,7 @@ export async function GET(request: NextRequest) {
     if (search) {
       where.OR = [
         { guestHouseName: { contains: search } },
+        { organizationName: { contains: search } },
         { specificAddress: { contains: search } },
         { ownerName: { contains: search } },
         { contactName: { contains: search } },

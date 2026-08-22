@@ -60,6 +60,7 @@ import { locationData, getAllSubCities } from '@/lib/location-data';
 interface GuestHouse {
   id: string;
   guestHouseName: string;
+  organizationName: string | null;
   subCity: string;
   area: string;
   specificAddress: string;
@@ -339,6 +340,11 @@ export default function DataList({ refreshTrigger }: DataListProps) {
                     <h3 className="truncate text-base font-semibold">
                       {item.guestHouseName}
                     </h3>
+                    {item.organizationName && (
+                      <p className="truncate text-xs text-muted-foreground">
+                        {item.organizationName}
+                      </p>
+                    )}
                     <div className="mt-1 flex items-center gap-1.5 text-sm text-muted-foreground">
                       <MapPin className="h-3.5 w-3.5 shrink-0" />
                       <span className="truncate">
@@ -480,6 +486,9 @@ export default function DataList({ refreshTrigger }: DataListProps) {
                 <DialogDescription>
                   {viewItem.area}, {viewItem.subCity}
                 </DialogDescription>
+                {viewItem.organizationName && (
+                  <p className="mt-1 text-sm text-muted-foreground">{viewItem.organizationName}</p>
+                )}
               </DialogHeader>
               <div className="space-y-4 pt-2">
                 <div className="grid grid-cols-2 gap-3">

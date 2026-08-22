@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import { Geist, Geist_Mono } from "next/font/google";
 import "./globals.css";
 import { Toaster } from "@/components/ui/toaster";
+import { AuthWrapper } from "@/components/AuthProvider";
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -15,7 +16,7 @@ const geistMono = Geist_Mono({
 
 export const metadata: Metadata = {
   title: 'Bishoftu Guest House Survey - Data Collection',
-  description: 'Mobile-based data collection system for guest house service survey in Bishoftu City, covering sub-cities Dukam and surrounding areas.',
+  description: 'Mobile-based data collection system for guest house service survey in Bishoftu City, covering sub-cities Dukam, Chelaleka, and Debaayyuu.',
   icons: {
     icon: 'https://z-cdn.chatglm.cn/z-ai/static/logo.svg',
   },
@@ -31,8 +32,10 @@ export default function RootLayout({
       <body
         className={`${geistSans.variable} ${geistMono.variable} antialiased bg-background text-foreground`}
       >
-        {children}
-        <Toaster />
+        <AuthWrapper>
+          {children}
+          <Toaster />
+        </AuthWrapper>
       </body>
     </html>
   );
