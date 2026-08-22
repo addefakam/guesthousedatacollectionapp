@@ -1,39 +1,71 @@
 import { NextResponse } from 'next/server';
-import { execSync } from 'child_process';
 import { PrismaClient } from '@prisma/client';
 import { hashPassword } from '@/lib/password';
 
 export const dynamic = 'force-dynamic';
 
+async function ensureTables(prisma: PrismaClient) {
+  // Create tables using raw SQL if they don't exist
+  // This avoids needing the Prisma CLI on Vercel serverless
+  await prisma.$executeRawUnsafe(`
+    CREATE TABLE IF NOT EXISTS "User" (
+      "id" TEXT NOT NULL PRIMARY KEY,
+      "username" TEXT NOT NULL,
+      "password" TEXT NOT NULL,
+      "name" TEXT NOT NULL,
+      "role" TEXT NOT NULL DEFAULT 'COLLECTOR',
+      "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
+      "updatedAt" TIMESTAMP(3) NOT NULL
+    );
+  `);
+
+  await prisma.$executeRawUnsafe(`
+    CREATE UNIQUE INDEX IF NOT EXISTS "User_username_key" ON "User"("username");
+  `);
+
+  await prisma.$executeRawUnsafe(`
+    CREATE TABLE IF NOT EXISTS "GuestHouse" (
+      "id" TEXT NOT NULL PRIMARY KEY,
+      "guestHouseName" TEXT NOT NULL,
+      "organizationName" TEXT,
+      "subCity" TEXT NOT NULL,
+      "area" TEXT NOT NULL,
+      "specificAddress" TEXT NOT NULL,
+      "numberOfRooms" INTEGER NOT NULL,
+      "licenseType" TEXT NOT NULL,
+      "licenseLevel" TEXT NOT NULL,
+      "licenseNumber" TEXT,
+      "serviceRating" INTEGER NOT NULL,
+      "contactPhone" TEXT,
+      "contactName" TEXT,
+      "ownerName" TEXT,
+      "hasRestaurant" BOOLEAN NOT NULL DEFAULT false,
+      "hasParking" BOOLEAN NOT NULL DEFAULT false,
+      "hasWiFi" BOOLEAN NOT NULL DEFAULT false,
+      "hasHotWater" BOOLEAN NOT NULL DEFAULT false,
+      "additionalServices" TEXT,
+      "surveyorName" TEXT,
+      "surveyorId" TEXT,
+      "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
+      "updatedAt" TIMESTAMP(3) NOT NULL
+    );
+  `);
+}
+
 export async function POST() {
   const results: string[] = [];
 
   try {
-    // Step 1: Push Prisma schema to database (creates/updates tables)
-    results.push('Pushing schema to database...');
-    try {
-      execSync('npx prisma db push --accept-data-loss --skip-generate 2>&1', {
-        cwd: process.cwd(),
-        timeout: 30000,
-        stdio: 'pipe',
-      });
-      results.push('Schema pushed successfully.');
-    } catch (schemaErr: unknown) {
-      const errMsg = schemaErr instanceof Error ? schemaErr.message : String(schemaErr);
-      // If tables already exist or are up to date, that's fine
-      if (errMsg.includes('already exists') || errMsg.includes('is already up to date')) {
-        results.push('Tables already exist, skipping schema push.');
-      } else {
-        results.push('Schema push notice: ' + errMsg);
-        // Continue anyway - user creation may still work
-      }
-    }
-
-    // Step 2: Create admin user if not exists
-    results.push('Checking for admin user...');
     const prisma = new PrismaClient();
 
     try {
+      // Step 1: Ensure tables exist via raw SQL
+      results.push('Creating tables if needed...');
+      await ensureTables(prisma);
+      results.push('Tables ready.');
+
+      // Step 2: Create admin user if not exists
+      results.push('Checking for admin user...');
       const existing = await prisma.user.findUnique({
         where: { username: 'admin' },
       });
@@ -49,7 +81,7 @@ export async function POST() {
             role: 'ADMIN',
           },
         });
-        results.push('Admin user created successfully: admin / admin123');
+        results.push('Admin user created: admin / admin123');
       }
     } finally {
       await prisma.$disconnect();
@@ -57,14 +89,16 @@ export async function POST() {
 
     return NextResponse.json({
       success: true,
-      message: 'Setup complete!',
+      message: 'Setup complete! You can now log in.',
       details: results,
     });
   } catch (error) {
+    const msg = error instanceof Error ? error.message : String(error);
     return NextResponse.json(
       {
         success: false,
-        error: error instanceof Error ? error.message : 'Setup failed',
+        error: msg,
+        hint: 'Make sure DATABASE_URL in Vercel env points to your Neon PostgreSQL database and starts with postgresql://',
         details: results,
       },
       { status: 500 }
@@ -72,7 +106,6 @@ export async function POST() {
   }
 }
 
-// Also support GET for convenience (browser access)
 export async function GET() {
   return POST();
 }
