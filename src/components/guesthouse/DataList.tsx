@@ -54,6 +54,7 @@ import {
   Car,
   Utensils,
   Droplets,
+  FileSpreadsheet,
 } from 'lucide-react';
 import { locationData, getAllSubCities } from '@/lib/location-data';
 
@@ -166,7 +167,7 @@ export default function DataList({ refreshTrigger }: DataListProps) {
     }
   };
 
-  const handleExport = async () => {
+  const handleExportCSV = async () => {
     try {
       const params = new URLSearchParams();
       if (filterSubCity) params.set('subCity', filterSubCity);
@@ -188,6 +189,33 @@ export default function DataList({ refreshTrigger }: DataListProps) {
       toast({
         title: 'Export Failed',
         description: 'Could not export data.',
+        variant: 'destructive',
+      });
+    }
+  };
+
+  const handleExportExcel = async () => {
+    try {
+      const params = new URLSearchParams();
+      if (filterSubCity) params.set('subCity', filterSubCity);
+      if (filterArea) params.set('area', filterArea);
+
+      const res = await fetch(`/api/guesthouses/export/excel?${params}`);
+      if (!res.ok) throw new Error('Excel export failed');
+      const blob = await res.blob();
+      const url = window.URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = `bishoftu_guesthouses_survey_${new Date().toISOString().split('T')[0]}.xlsx`;
+      document.body.appendChild(a);
+      a.click();
+      a.remove();
+      window.URL.revokeObjectURL(url);
+      toast({ title: 'Exported', description: 'Excel file downloaded.' });
+    } catch {
+      toast({
+        title: 'Export Failed',
+        description: 'Could not export Excel file.',
         variant: 'destructive',
       });
     }
@@ -294,10 +322,18 @@ export default function DataList({ refreshTrigger }: DataListProps) {
             <Button
               variant="outline"
               size="sm"
-              onClick={handleExport}
+              onClick={handleExportCSV}
             >
               <Download className="mr-1 h-4 w-4" />
               Export CSV
+            </Button>
+            <Button
+              size="sm"
+              className="bg-emerald-600 hover:bg-emerald-700"
+              onClick={handleExportExcel}
+            >
+              <FileSpreadsheet className="mr-1 h-4 w-4" />
+              Export Excel
             </Button>
           </div>
         </CardContent>
