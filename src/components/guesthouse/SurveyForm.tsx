@@ -21,7 +21,6 @@ import {
 import { useToast } from '@/hooks/use-toast';
 import {
   Building2,
-  Star,
   Loader2,
   RotateCcw,
   ShieldCheck,
@@ -31,6 +30,7 @@ import {
   UserCircle,
   Phone,
   FileText,
+  Eye,
 } from 'lucide-react';
 import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
 import {
@@ -49,17 +49,8 @@ interface SurveyFormProps {
 const STEPS = [
   { id: 1, title: 'Establishment', titleOr: 'Qophiin', icon: Building2 },
   { id: 2, title: 'License', titleOr: 'Laisansii', icon: FileText },
-  { id: 3, title: 'Rating', titleOr: 'Qabxii', icon: Star },
-  { id: 4, title: 'Contact', titleOr: 'Quunnamtii', icon: Phone },
-  { id: 5, title: 'Confirm', titleOr: 'Mirkanaa\'uu', icon: ShieldCheck },
-];
-
-const RATING_LABELS = [
-  { en: 'Poor', or: 'Qonnaa' },
-  { en: 'Fair', or: 'Miira Gaarii' },
-  { en: 'Good', or: 'Gaarii' },
-  { en: 'Very Good', or: 'Gaarii Dhiphaachaa' },
-  { en: 'Excellent', or: 'Baay\'ee Gaarii' },
+  { id: 3, title: 'Contact', titleOr: 'Quunnamtii', icon: Phone },
+  { id: 4, title: 'Review & Confirm', titleOr: 'Ilaali fi Mirkanaa', icon: Eye },
 ];
 
 export default function SurveyForm({ onSubmit, surveyorName, surveyorId }: SurveyFormProps) {
@@ -68,8 +59,6 @@ export default function SurveyForm({ onSubmit, surveyorName, surveyorId }: Surve
   const [currentStep, setCurrentStep] = useState(1);
   const [selectedSubCity, setSelectedSubCity] = useState('');
   const [areas, setAreas] = useState<string[]>([]);
-  const [rating, setRating] = useState(0);
-  const [hoverRating, setHoverRating] = useState(0);
   const [dataConfirmed, setDataConfirmed] = useState('');
 
   const emptyForm = {
@@ -122,18 +111,12 @@ export default function SurveyForm({ onSubmit, surveyorName, surveyorId }: Surve
         }
         return true;
       case 3:
-        if (rating === 0) {
-          toast({ title: 'Rating Required / Qabxii Barbaachisaa', description: 'Please rate the service / Tajaajila miira essitu', variant: 'destructive' });
-          return false;
-        }
-        return true;
-      case 4:
         if (!formData.ownerName || !formData.contactName || !formData.contactPhone) {
           toast({ title: 'Field Missing / Qabiyyee Hin Jiru', description: 'All fields in this step are required / Galii hundinuu barbaachisaadha', variant: 'destructive' });
           return false;
         }
         return true;
-      case 5:
+      case 4:
         if (dataConfirmed !== 'yes') {
           toast({ title: 'Confirmation Required / Mirkanaa\'uu Barbaachisaa', description: 'Please confirm data is true and authenticated / Daataan dhugaa fi mirkanaa\'eef mirkanaadhu', variant: 'destructive' });
           return false;
@@ -166,7 +149,7 @@ export default function SurveyForm({ onSubmit, surveyorName, surveyorId }: Surve
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           ...formData,
-          serviceRating: rating,
+          serviceRating: 0,
           surveyorName,
           surveyorId,
         }),
@@ -185,7 +168,6 @@ export default function SurveyForm({ onSubmit, surveyorName, surveyorId }: Surve
       setFormData(emptyForm);
       setSelectedSubCity('');
       setAreas([]);
-      setRating(0);
       setDataConfirmed('');
       setCurrentStep(1);
       onSubmit();
@@ -204,10 +186,24 @@ export default function SurveyForm({ onSubmit, surveyorName, surveyorId }: Surve
     setFormData(emptyForm);
     setSelectedSubCity('');
     setAreas([]);
-    setRating(0);
     setDataConfirmed('');
     setCurrentStep(1);
   };
+
+  const reviewItems = [
+    { label: 'Name / Maqaa', value: formData.guestHouseName },
+    { label: 'Organization / Dhaabbataa', value: formData.organizationName },
+    { label: 'Sub-City / Magaalaa Digdamii', value: formData.subCity },
+    { label: 'Area / Kebele', value: formData.area },
+    { label: 'Address / Teessoo', value: formData.specificAddress },
+    { label: 'Rooms / Qubeettii', value: formData.numberOfRooms },
+    { label: 'License Type / Gosa Laisansii', value: formData.licenseType },
+    { label: 'License Level / Saddarkaa Eyeemaa', value: formData.licenseLevel },
+    { label: 'License No. / Lakkoofsa Laisansii', value: formData.licenseNumber },
+    { label: 'Owner / Abbaa Qaabeyee', value: formData.ownerName },
+    { label: 'Contact Person / Nama Quunnamu', value: formData.contactName },
+    { label: 'Phone / Bilbila', value: formData.contactPhone },
+  ];
 
   return (
     <div>
@@ -228,8 +224,7 @@ export default function SurveyForm({ onSubmit, surveyorName, surveyorId }: Surve
                       : isCompleted
                         ? 'bg-emerald-100 text-emerald-700 cursor-pointer'
                         : 'bg-gray-100 text-gray-400'
-                  }`}
-                >
+                  }`}>
                   <div className={`flex h-8 w-8 items-center justify-center rounded-full ${
                     isCompleted ? 'bg-emerald-600 text-white' : ''
                   }`}>
@@ -267,15 +262,18 @@ export default function SurveyForm({ onSubmit, surveyorName, surveyorId }: Surve
               <CardHeader className="pb-3">
                 <CardTitle className="flex items-center gap-2 text-lg">
                   <Building2 className="h-5 w-5 text-emerald-600" />
-                  Establishment Information / Odeeffannoo Qophii
+                  Establishment Information
+                  <br />
+                  <span className="text-base font-normal text-muted-foreground">Odeeffannoo Qophii</span>
                 </CardTitle>
-                <CardDescription>Basic details about the establishment / Odeeffannoo asii qophii wajjiin
-                </CardDescription>
+                <CardDescription>Basic details about the establishment</CardDescription>
               </CardHeader>
               <CardContent className="space-y-4">
                 <div className="space-y-2">
                   <Label htmlFor="guestHouseName">
-                    Name / Maqaa <span className="text-red-500">*</span>
+                    Name
+                    <br />
+                    <span className="text-sm font-normal text-muted-foreground">Maqaa</span> <span className="text-red-500">*</span>
                   </Label>
                   <Input
                     id="guestHouseName"
@@ -289,7 +287,9 @@ export default function SurveyForm({ onSubmit, surveyorName, surveyorId }: Surve
 
                 <div className="space-y-2">
                   <Label htmlFor="organizationName">
-                    Organization Name / Maqaa Dhaabbataa <span className="text-red-500">*</span>
+                    Organization Name
+                    <br />
+                    <span className="text-sm font-normal text-muted-foreground">Maqaa Dhaabbataa</span> <span className="text-red-500">*</span>
                   </Label>
                   <Input
                     id="organizationName"
@@ -304,11 +304,13 @@ export default function SurveyForm({ onSubmit, surveyorName, surveyorId }: Surve
                 <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
                   <div className="space-y-2">
                     <Label htmlFor="subCity">
-                      Sub-City / Magaalaa Digdamii <span className="text-red-500">*</span>
+                      Sub-City
+                      <br />
+                      <span className="text-sm font-normal text-muted-foreground">Magaalaa Digdamii</span> <span className="text-red-500">*</span>
                     </Label>
                     <Select value={formData.subCity} onValueChange={handleSubCityChange}>
                       <SelectTrigger id="subCity">
-                        <SelectValue placeholder="Select sub-city / Filadhu" />
+                        <SelectValue placeholder="Select / Filadhu" />
                       </SelectTrigger>
                       <SelectContent>
                         {locationData.subCities.map((sc) => (
@@ -320,7 +322,9 @@ export default function SurveyForm({ onSubmit, surveyorName, surveyorId }: Surve
 
                   <div className="space-y-2">
                     <Label htmlFor="area">
-                      Area / Kebele <span className="text-red-500">*</span>
+                      Area / Kebele
+                      <br />
+                      <span className="text-sm font-normal text-muted-foreground">Ganda</span> <span className="text-red-500">*</span>
                     </Label>
                     <Select
                       value={formData.area}
@@ -329,7 +333,7 @@ export default function SurveyForm({ onSubmit, surveyorName, surveyorId }: Surve
                     >
                       <SelectTrigger id="area">
                         <SelectValue
-                          placeholder={selectedSubCity ? 'Select area / Filadhu' : 'Select sub-city first / Magaalaa digdamiin dura filadhu'}
+                          placeholder={selectedSubCity ? 'Select / Filadhu' : 'Select sub-city first'}
                         />
                       </SelectTrigger>
                       <SelectContent>
@@ -343,12 +347,14 @@ export default function SurveyForm({ onSubmit, surveyorName, surveyorId }: Surve
 
                 <div className="space-y-2">
                   <Label htmlFor="specificAddress">
-                    Specific Address / Teessoo Qaamaa <span className="text-red-500">*</span>
+                    Specific Address
+                    <br />
+                    <span className="text-sm font-normal text-muted-foreground">Teessoo Qaamaa</span> <span className="text-red-500">*</span>
                   </Label>
                   <Input
                     id="specificAddress"
                     name="specificAddress"
-                    placeholder="Street name, landmark... / Magaalaa, bifaa addaa..."
+                    placeholder="Street name, landmark..."
                     value={formData.specificAddress}
                     onChange={handleChange}
                     required
@@ -363,15 +369,18 @@ export default function SurveyForm({ onSubmit, surveyorName, surveyorId }: Surve
               <CardHeader className="pb-3">
                 <CardTitle className="flex items-center gap-2 text-lg">
                   <FileText className="h-5 w-5 text-blue-600" />
-                  Capacity & License / Qubeettii fi Laisansii
+                  Capacity & License
+                  <br />
+                  <span className="text-base font-normal text-muted-foreground">Qubeettii fi Laisansii</span>
                 </CardTitle>
-                <CardDescription>Room capacity and licensing / Qubeettii yoo laisansii qophii
-                </CardDescription>
+                <CardDescription>Room capacity and licensing information</CardDescription>
               </CardHeader>
               <CardContent className="space-y-4">
                 <div className="space-y-2">
                   <Label htmlFor="numberOfRooms">
-                    Number of Rooms / Lakkoofsa Qubeettii <span className="text-red-500">*</span>
+                    Number of Rooms
+                    <br />
+                    <span className="text-sm font-normal text-muted-foreground">Lakkoofsa Qubeettii</span> <span className="text-red-500">*</span>
                   </Label>
                   <Input
                     id="numberOfRooms"
@@ -388,10 +397,12 @@ export default function SurveyForm({ onSubmit, surveyorName, surveyorId }: Surve
                 <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
                   <div className="space-y-2">
                     <Label>
-                      License Type / Gosa Laisansii <span className="text-red-500">*</span>
+                      License Type
+                      <br />
+                      <span className="text-sm font-normal text-muted-foreground">Gosa Laisansii</span> <span className="text-red-500">*</span>
                     </Label>
                     <Select value={formData.licenseType} onValueChange={(v) => handleSelectChange('licenseType', v)}>
-                      <SelectTrigger><SelectValue placeholder="Select type / Filadhu" /></SelectTrigger>
+                      <SelectTrigger><SelectValue placeholder="Select / Filadhu" /></SelectTrigger>
                       <SelectContent>
                         {LICENSE_TYPES.map((t) => (
                           <SelectItem key={t} value={t}>{t}</SelectItem>
@@ -401,10 +412,12 @@ export default function SurveyForm({ onSubmit, surveyorName, surveyorId }: Surve
                   </div>
                   <div className="space-y-2">
                     <Label>
-                      License Level / Saffisa Laisansii <span className="text-red-500">*</span>
+                      License Level
+                      <br />
+                      <span className="text-sm font-normal text-muted-foreground">Saddarkaa Eyeemaa</span> <span className="text-red-500">*</span>
                     </Label>
                     <Select value={formData.licenseLevel} onValueChange={(v) => handleSelectChange('licenseLevel', v)}>
-                      <SelectTrigger><SelectValue placeholder="Select level / Filadhu" /></SelectTrigger>
+                      <SelectTrigger><SelectValue placeholder="Select / Filadhu" /></SelectTrigger>
                       <SelectContent>
                         {LICENSE_LEVELS.map((l) => (
                           <SelectItem key={l} value={l}>{l}</SelectItem>
@@ -416,7 +429,9 @@ export default function SurveyForm({ onSubmit, surveyorName, surveyorId }: Surve
 
                 <div className="space-y-2">
                   <Label htmlFor="licenseNumber">
-                    License Number / Lakkoofsa Laisansii <span className="text-red-500">*</span>
+                    License Number
+                    <br />
+                    <span className="text-sm font-normal text-muted-foreground">Lakkoofsa Laisansii</span> <span className="text-red-500">*</span>
                   </Label>
                   <Input
                     id="licenseNumber"
@@ -435,63 +450,24 @@ export default function SurveyForm({ onSubmit, surveyorName, surveyorId }: Surve
             <>
               <CardHeader className="pb-3">
                 <CardTitle className="flex items-center gap-2 text-lg">
-                  <Star className="h-5 w-5 text-amber-500" />
-                  Service Rating / Qabxii Tajaajila
-                </CardTitle>
-                <CardDescription>Rate the overall service quality / Miira tajaajila waliigalaa essitu
-                </CardDescription>
-              </CardHeader>
-              <CardContent>
-                <div className="flex flex-col items-center gap-4 py-4">
-                  <div className="flex items-center gap-2">
-                    {[1, 2, 3, 4, 5].map((star) => (
-                      <button
-                        key={star}
-                        type="button"
-                        className="rounded-sm p-1 transition-transform hover:scale-125 focus:outline-none focus:ring-2 focus:ring-amber-400 focus:ring-offset-1"
-                        onMouseEnter={() => setHoverRating(star)}
-                        onMouseLeave={() => setHoverRating(0)}
-                        onClick={() => setRating(star)}
-                      >
-                        <Star
-                          className={`h-10 w-10 ${
-                            star <= (hoverRating || rating)
-                              ? 'fill-amber-400 text-amber-400'
-                              : 'fill-none text-gray-300'
-                          }`}
-                        />
-                      </button>
-                    ))}
-                  </div>
-                  <span className="text-lg font-semibold text-amber-600">
-                    {rating > 0
-                      ? `${RATING_LABELS[rating - 1].en} / ${RATING_LABELS[rating - 1].or}`
-                      : 'Tap to rate / Cuunfaa miira essitu'}
-                  </span>
-                </div>
-              </CardContent>
-            </>
-          )}
-
-          {currentStep === 4 && (
-            <>
-              <CardHeader className="pb-3">
-                <CardTitle className="flex items-center gap-2 text-lg">
                   <Phone className="h-5 w-5 text-purple-600" />
-                  Contact Information / Odeeffannoo Quunnamtii
+                  Contact Information
+                  <br />
+                  <span className="text-base font-normal text-muted-foreground">Odeeffannoo Quunnamtii</span>
                 </CardTitle>
-                <CardDescription>Owner and contact details / Odeeffannoo owneefii quunnamticha
-                </CardDescription>
+                <CardDescription>Owner and contact details</CardDescription>
               </CardHeader>
               <CardContent className="space-y-4">
                 <div className="space-y-2">
                   <Label htmlFor="ownerName">
-                    Owner Name / Maqaa Owneefaa <span className="text-red-500">*</span>
+                    Owner Name
+                    <br />
+                    <span className="text-sm font-normal text-muted-foreground">Maqaa Abbaa Qaabeyee</span> <span className="text-red-500">*</span>
                   </Label>
                   <Input
                     id="ownerName"
                     name="ownerName"
-                    placeholder="Full name of owner / Maqaa owneefaa guutuu"
+                    placeholder="Full name of owner"
                     value={formData.ownerName}
                     onChange={handleChange}
                     required
@@ -499,12 +475,14 @@ export default function SurveyForm({ onSubmit, surveyorName, surveyorId }: Surve
                 </div>
                 <div className="space-y-2">
                   <Label htmlFor="contactName">
-                    Contact Person / Nama Quunnamu <span className="text-red-500">*</span>
+                    Contact Person
+                    <br />
+                    <span className="text-sm font-normal text-muted-foreground">Nama Quunnamu</span> <span className="text-red-500">*</span>
                   </Label>
                   <Input
                     id="contactName"
                     name="contactName"
-                    placeholder="Manager or reception contact / Bulchiisaa ykn qunnamsiisaa"
+                    placeholder="Manager or reception contact"
                     value={formData.contactName}
                     onChange={handleChange}
                     required
@@ -512,7 +490,9 @@ export default function SurveyForm({ onSubmit, surveyorName, surveyorId }: Surve
                 </div>
                 <div className="space-y-2">
                   <Label htmlFor="contactPhone">
-                    Phone Number / Lakkoofsa Bilbila <span className="text-red-500">*</span>
+                    Phone Number
+                    <br />
+                    <span className="text-sm font-normal text-muted-foreground">Lakkoofsa Bilbila</span> <span className="text-red-500">*</span>
                   </Label>
                   <Input
                     id="contactPhone"
@@ -528,46 +508,47 @@ export default function SurveyForm({ onSubmit, surveyorName, surveyorId }: Surve
             </>
           )}
 
-          {currentStep === 5 && (
+          {currentStep === 4 && (
             <>
               <CardHeader className="pb-3">
                 <CardTitle className="flex items-center gap-2 text-lg">
-                  <ShieldCheck className="h-5 w-5 text-blue-600" />
-                  Data Confirmation / Mirkanaa'uu Daataa
+                  <Eye className="h-5 w-5 text-blue-600" />
+                  Review & Confirm
+                  <br />
+                  <span className="text-base font-normal text-muted-foreground">Ilaali fi Mirkanaa</span>
                 </CardTitle>
-                <CardDescription>Confirm the authenticity of the data / Dhugaa ta'umsa daataa mirkanaadhu
-                </CardDescription>
+                <CardDescription>Review all data before submitting / Galii hunda ilaalii booda erguu</CardDescription>
               </CardHeader>
-              <CardContent className="space-y-5">
-                <RadioGroup value={dataConfirmed} onValueChange={setDataConfirmed} className="space-y-3">
-                  <div className="flex items-start space-x-3 rounded-lg border-2 border-emerald-300 bg-emerald-50 p-4 transition-all has-[:checked]:border-emerald-500 has-[:checked]:bg-emerald-100">
-                    <RadioGroupItem value="yes" id="confirm-yes" className="mt-0.5" />
-                    <Label htmlFor="confirm-yes" className="cursor-pointer leading-snug">
-                      I confirm that the data provided is <span className="font-bold text-emerald-700">true and authenticated</span>
-                      <br />
-                      <span className="text-sm text-emerald-600">
-                        Daataan kennaman dhugaa fi mirkanaa'e ta'a jechuun mirkanaa'a
-                      </span>
-                    </Label>
-                  </div>
-                  <div className="flex items-start space-x-3 rounded-lg border-2 border-red-300 bg-red-50 p-4 transition-all has-[:checked]:border-red-500 has-[:checked]:bg-red-100">
-                    <RadioGroupItem value="no" id="confirm-no" className="mt-0.5" />
-                    <Label htmlFor="confirm-no" className="cursor-pointer leading-snug">
-                      The data may not be verified
-                      <br />
-                      <span className="text-sm text-red-600">
-                        Daataan mirkanaa'uu hin danda'ane
-                      </span>
-                    </Label>
-                  </div>
-                </RadioGroup>
+              <CardContent className="space-y-4">
+                <div className="rounded-lg border bg-muted/30 divide-y">
+                  {reviewItems.map((item) => (
+                    <div key={item.label} className="flex justify-between gap-2 px-3 py-2.5 text-sm">
+                      <span className="text-muted-foreground whitespace-nowrap">{item.label}</span>
+                      <span className="font-medium text-right">{item.value || '-'}</span>
+                    </div>
+                  ))}
+                </div>
 
                 <div className="rounded-lg bg-muted/50 p-3">
                   <div className="flex items-center gap-2 text-sm text-muted-foreground">
                     <UserCircle className="h-4 w-4" />
-                    Surveyor / Sakatta'aa
+                    <span>Surveyor</span>
+                    <span className="text-xs opacity-70">/ Sakatta'aa</span>
                   </div>
                   <p className="mt-1 font-medium">{surveyorName || 'Not logged in'}</p>
+                </div>
+
+                <div className="pt-2">
+                  <RadioGroup value={dataConfirmed} onValueChange={setDataConfirmed}>
+                    <div className="flex items-start space-x-3 rounded-xl border-2 border-emerald-300 bg-emerald-50 p-4 transition-all has-[:checked]:border-emerald-600 has-[:checked]:bg-emerald-100 has-[:checked]:shadow-md">
+                      <RadioGroupItem value="yes" id="confirm-yes" className="mt-1" />
+                      <Label htmlFor="confirm-yes" className="cursor-pointer leading-relaxed">
+                        <span className="font-bold text-emerald-800">I confirm that the data provided is true and authenticated</span>
+                        <br />
+                        <span className="text-sm font-semibold text-emerald-700">Daataan kennaman dhugaa fi mirkanaa'e ta'a jechuun mirkanaa'a</span>
+                      </Label>
+                    </div>
+                  </RadioGroup>
                 </div>
               </CardContent>
             </>
