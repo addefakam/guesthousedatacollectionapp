@@ -27,7 +27,7 @@ export async function GET(request: NextRequest) {
       'Guest House Name',
       'Organization Name',
       'Sub-City',
-      'Area/Kebele',
+      'Werreda',
       'Specific Address',
       'Number of Rooms',
       'License Type',

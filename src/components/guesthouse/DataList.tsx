@@ -391,7 +391,7 @@ export default function DataList({ refreshTrigger }: DataListProps) {
                     <th className="px-3 py-3 text-left font-semibold text-muted-foreground whitespace-nowrap">#</th>
                     <th className="px-3 py-3 text-left font-semibold text-muted-foreground whitespace-nowrap">Organization / Dhaabbataa</th>
                     <th className="px-3 py-3 text-left font-semibold text-muted-foreground whitespace-nowrap">Sub-City</th>
-                    <th className="px-3 py-3 text-left font-semibold text-muted-foreground whitespace-nowrap">Area</th>
+                    <th className="px-3 py-3 text-left font-semibold text-muted-foreground whitespace-nowrap">Werreda</th>
                     <th className="px-3 py-3 text-left font-semibold text-muted-foreground whitespace-nowrap">Address</th>
                     <th className="px-3 py-3 text-center font-semibold text-muted-foreground whitespace-nowrap">Rooms</th>
                     <th className="px-3 py-3 text-left font-semibold text-muted-foreground whitespace-nowrap">License Type</th>
@@ -555,7 +555,7 @@ export default function DataList({ refreshTrigger }: DataListProps) {
                   </div>
                 </div>
                 <div className="space-y-2">
-                  <h4 className="text-sm font-semibold">Address / Teessoo</h4>
+                  <h4 className="text-sm font-semibold">Address / Baka Addaa</h4>
                   <p className="text-sm text-muted-foreground rounded-lg border p-3">{viewItem.specificAddress}</p>
                 </div>
                 <div className="space-y-2">
@@ -619,7 +619,7 @@ export default function DataList({ refreshTrigger }: DataListProps) {
                     </Select>
                   </div>
                   <div className="space-y-2">
-                    <Label className="text-xs">Area / Ganda <span className="text-red-500">*</span></Label>
+                    <Label className="text-xs">Werreda <span className="text-red-500">*</span></Label>
                     <Select value={editForm.area} onValueChange={(v) => setEditForm({ ...editForm, area: v })} disabled={!editForm.subCity}>
                       <SelectTrigger className="text-xs"><SelectValue /></SelectTrigger>
                       <SelectContent>
@@ -629,7 +629,7 @@ export default function DataList({ refreshTrigger }: DataListProps) {
                   </div>
                 </div>
                 <div className="space-y-2">
-                  <Label className="text-xs">Specific Address / Teessoo Qaamaa <span className="text-red-500">*</span></Label>
+                  <Label className="text-xs">Specific Address / Baka Addaa <span className="text-red-500">*</span></Label>
                   <Input value={editForm.specificAddress} onChange={(e) => setEditForm({ ...editForm, specificAddress: e.target.value })} />
                 </div>
               </div>
@@ -680,7 +680,7 @@ export default function DataList({ refreshTrigger }: DataListProps) {
                 </div>
                 <div className="space-y-2">
                   <Label className="text-xs">Phone Number / Lakkoofsa Bilbila <span className="text-red-500">*</span></Label>
-                  <Input type="tel" value={editForm.contactPhone} onChange={(e) => setEditForm({ ...editForm, contactPhone: e.target.value })} />
+                  <Input type="tel" value={editForm.contactPhone} onChange={(e) => setEditForm({ ...editForm, contactPhone: e.target.value.replace(/[^0-9+\s-]/g, '') })} />
                 </div>
               </div>
 

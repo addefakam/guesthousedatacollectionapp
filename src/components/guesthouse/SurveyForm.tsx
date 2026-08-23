@@ -113,6 +113,12 @@ export default function SurveyForm({ onSubmit, surveyorName, surveyorId, isOnlin
           toast({ title: 'Field Missing / Qabiyyee Hin Jiru', description: 'All fields in this step are required / Galii hundinuu barbaachisaadha', variant: 'destructive' });
           return false;
         }
+        const phoneClean = formData.contactPhone.replace(/[\s-]/g, '');
+        const ethPhoneRegex = /^(\+251|251|0)?(9|7)\d{8}$/;
+        if (!ethPhoneRegex.test(phoneClean)) {
+          toast({ title: 'Invalid Phone / Bilbila Dogoggora', description: 'Enter valid Ethiopian number (e.g., +251 91 234 5678)', variant: 'destructive' });
+          return false;
+        }
         return true;
       case 4:
         if (dataConfirmed !== 'yes') {
@@ -169,8 +175,8 @@ export default function SurveyForm({ onSubmit, surveyorName, surveyorId, isOnlin
   const reviewItems = [
     { label: 'Organization / Dhaabbataa', value: formData.organizationName },
     { label: 'Sub-City / Kuttaa Maggalaa', value: formData.subCity },
-    { label: 'Area / Kebele', value: formData.area },
-    { label: 'Address / Teessoo', value: formData.specificAddress },
+    { label: 'Werreda', value: formData.area },
+    { label: 'Address / Baka Addaa', value: formData.specificAddress },
     { label: 'Rooms / Qubeettii', value: formData.numberOfRooms },
     { label: 'License Type / Goossa Eyyema', value: formData.licenseType },
     { label: 'License Level / Saddarkaa Eyyema', value: formData.licenseLevel },
@@ -247,7 +253,7 @@ export default function SurveyForm({ onSubmit, surveyorName, surveyorId, isOnlin
                     </Select>
                   </div>
                   <div className="space-y-1.5 sm:space-y-2">
-                    <Label htmlFor="area" className="text-xs sm:text-sm">Area / Kebele<br /><span className="text-xs font-normal text-muted-foreground">Ganda</span> <span className="text-red-500">*</span></Label>
+                    <Label htmlFor="area" className="text-xs sm:text-sm">Werreda <span className="text-red-500">*</span></Label>
                     <Select value={formData.area} onValueChange={(v) => handleSelectChange('area', v)} disabled={!selectedSubCity}>
                       <SelectTrigger id="area" className="text-sm sm:text-base"><SelectValue placeholder={selectedSubCity ? 'Select / Filadhu' : 'Select sub-city first'} /></SelectTrigger>
                       <SelectContent>{areas.map((a) => (<SelectItem key={a} value={a}>{a}</SelectItem>))}</SelectContent>
@@ -255,7 +261,7 @@ export default function SurveyForm({ onSubmit, surveyorName, surveyorId, isOnlin
                   </div>
                 </div>
                 <div className="space-y-1.5 sm:space-y-2">
-                  <Label htmlFor="specificAddress" className="text-xs sm:text-sm">Specific Address<br /><span className="text-xs font-normal text-muted-foreground">Teessoo Qaamaa</span> <span className="text-red-500">*</span></Label>
+                  <Label htmlFor="specificAddress" className="text-xs sm:text-sm">Specific Address<br /><span className="text-xs font-normal text-muted-foreground">Baka Addaa</span> <span className="text-red-500">*</span></Label>
                   <Input id="specificAddress" name="specificAddress" placeholder="Street name, landmark..." value={formData.specificAddress} onChange={handleChange} required className="text-sm sm:text-base" />
                 </div>
               </CardContent>
@@ -322,7 +328,7 @@ export default function SurveyForm({ onSubmit, surveyorName, surveyorId, isOnlin
                 </div>
                 <div className="space-y-1.5 sm:space-y-2">
                   <Label htmlFor="contactPhone" className="text-xs sm:text-sm">Phone Number<br /><span className="text-xs font-normal text-muted-foreground">Lakkoofsa Bilbila</span> <span className="text-red-500">*</span></Label>
-                  <Input id="contactPhone" name="contactPhone" type="tel" placeholder="e.g., +251 91 234 5678" value={formData.contactPhone} onChange={handleChange} required className="text-sm sm:text-base" />
+                  <Input id="contactPhone" name="contactPhone" type="tel" placeholder="e.g., +251 91 234 5678" value={formData.contactPhone} onChange={(e) => { const val = e.target.value.replace(/[^0-9+\s-]/g, ''); setFormData(prev => ({ ...prev, contactPhone: val })); }} required className="text-sm sm:text-base" />
                 </div>
               </CardContent>
             </>

@@ -38,7 +38,7 @@ export async function GET(request: NextRequest) {
       { header: 'Guest House Name', key: 'guestHouseName', width: 28 },
       { header: 'Organization Name', key: 'organizationName', width: 25 },
       { header: 'Sub-City / Kuttaa Maggalaa', key: 'subCity', width: 22 },
-      { header: 'Area / Kebele', key: 'area', width: 20 },
+      { header: 'Werreda', key: 'area', width: 20 },
       { header: 'Specific Address', key: 'specificAddress', width: 30 },
       { header: 'Number of Rooms', key: 'numberOfRooms', width: 16 },
       { header: 'License Type / Goossa Eyyeema', key: 'licenseType', width: 24 },

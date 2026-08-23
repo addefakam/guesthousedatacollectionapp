@@ -1,0 +1,701 @@
+     1→'use client';
+     2→
+     3→import { useState, useEffect, useCallback } from 'react';
+     4→import { Button } from '@/components/ui/button';
+     5→import { Input } from '@/components/ui/input';
+     6→import { Label } from '@/components/ui/label';
+     7→import {
+     8→  Select,
+     9→  SelectContent,
+    10→  SelectItem,
+    11→  SelectTrigger,
+    12→  SelectValue,
+    13→} from '@/components/ui/select';
+    14→import {
+    15→  Card,
+    16→  CardContent,
+    17→  CardDescription,
+    18→  CardHeader,
+    19→  CardTitle,
+    20→} from '@/components/ui/card';
+    21→import {
+    22→  AlertDialog,
+    23→  AlertDialogAction,
+    24→  AlertDialogCancel,
+    25→  AlertDialogContent,
+    26→  AlertDialogDescription,
+    27→  AlertDialogFooter,
+    28→  AlertDialogHeader,
+    29→  AlertDialogTitle,
+    30→} from '@/components/ui/alert-dialog';
+    31→import {
+    32→  Dialog,
+    33→  DialogContent,
+    34→  DialogDescription,
+    35→  DialogHeader,
+    36→  DialogTitle,
+    37→  DialogFooter,
+    38→} from '@/components/ui/dialog';
+    39→import { Badge } from '@/components/ui/badge';
+    40→import { Skeleton } from '@/components/ui/skeleton';
+    41→import { useToast } from '@/hooks/use-toast';
+    42→import {
+    43→  Search,
+    44→  Download,
+    45→  Trash2,
+    46→  Eye,
+    47→  Building2,
+    48→  ChevronLeft,
+    49→  ChevronRight,
+    50→  RefreshCw,
+    51→  FileSpreadsheet,
+    52→  Pencil,
+    53→  Loader2,
+    54→  Save,
+    55→} from 'lucide-react';
+    56→import { locationData, getAllSubCities, getAreasForSubCity, LICENSE_TYPES, LICENSE_LEVELS } from '@/lib/location-data';
+    57→
+    58→interface GuestHouse {
+    59→  id: string;
+    60→  guestHouseName: string;
+    61→  organizationName: string | null;
+    62→  subCity: string;
+    63→  area: string;
+    64→  specificAddress: string;
+    65→  numberOfRooms: number;
+    66→  licenseType: string;
+    67→  licenseLevel: string;
+    68→  licenseNumber: string | null;
+    69→  serviceRating: number;
+    70→  contactPhone: string | null;
+    71→  contactName: string | null;
+    72→  ownerName: string | null;
+    73→  hasRestaurant: boolean;
+    74→  hasParking: boolean;
+    75→  hasWiFi: boolean;
+    76→  hasHotWater: boolean;
+    77→  additionalServices: string | null;
+    78→  surveyorName: string | null;
+    79→  createdAt: string;
+    80→  updatedAt: string;
+    81→}
+    82→
+    83→interface EditForm {
+    84→  organizationName: string;
+    85→  subCity: string;
+    86→  area: string;
+    87→  specificAddress: string;
+    88→  numberOfRooms: string;
+    89→  licenseType: string;
+    90→  licenseLevel: string;
+    91→  licenseNumber: string;
+    92→  ownerName: string;
+    93→  contactName: string;
+    94→  contactPhone: string;
+    95→}
+    96→
+    97→interface DataListProps {
+    98→  refreshTrigger: number;
+    99→}
+   100→
+   101→export default function DataList({ refreshTrigger }: DataListProps) {
+   102→  const { toast } = useToast();
+   103→  const [data, setData] = useState<GuestHouse[]>([]);
+   104→  const [loading, setLoading] = useState(true);
+   105→  const [search, setSearch] = useState('');
+   106→  const [filterSubCity, setFilterSubCity] = useState('');
+   107→  const [filterArea, setFilterArea] = useState('');
+   108→  const [areas, setAreas] = useState<string[]>([]);
+   109→  const [page, setPage] = useState(1);
+   110→  const [totalPages, setTotalPages] = useState(1);
+   111→  const [total, setTotal] = useState(0);
+   112→  const [deleteId, setDeleteId] = useState<string | null>(null);
+   113→  const [viewItem, setViewItem] = useState<GuestHouse | null>(null);
+   114→  const [editItem, setEditItem] = useState<GuestHouse | null>(null);
+   115→  const [editForm, setEditForm] = useState<EditForm | null>(null);
+   116→  const [editAreas, setEditAreas] = useState<string[]>([]);
+   117→  const [saving, setSaving] = useState(false);
+   118→  const [deleting, setDeleting] = useState(false);
+   119→
+   120→  const fetchData = useCallback(async () => {
+   121→    setLoading(true);
+   122→    try {
+   123→      const params = new URLSearchParams();
+   124→      if (search) params.set('search', search);
+   125→      if (filterSubCity) params.set('subCity', filterSubCity);
+   126→      if (filterArea) params.set('area', filterArea);
+   127→      params.set('page', String(page));
+   128→      params.set('limit', '50');
+   129→
+   130→      const res = await fetch(`/api/guesthouses?${params}`);
+   131→      if (!res.ok) throw new Error('Failed to fetch');
+   132→      const json = await res.json();
+   133→      setData(json.data);
+   134→      setTotal(json.total);
+   135→      setTotalPages(json.totalPages);
+   136→    } catch {
+   137→      toast({
+   138→        title: 'Error',
+   139→        description: 'Failed to load data',
+   140→        variant: 'destructive',
+   141→      });
+   142→    } finally {
+   143→      setLoading(false);
+   144→    }
+   145→  }, [search, filterSubCity, filterArea, page, toast]);
+   146→
+   147→  useEffect(() => {
+   148→    fetchData();
+   149→  }, [fetchData, refreshTrigger]);
+   150→
+   151→  const handleSubCityFilterChange = (value: string) => {
+   152→    setFilterSubCity(value);
+   153→    setFilterArea('');
+   154→    setPage(1);
+   155→    if (value) {
+   156→      const sc = locationData.subCities.find((s) => s.name === value);
+   157→      setAreas(sc ? sc.areas : []);
+   158→    } else {
+   159→      setAreas([]);
+   160→    }
+   161→  };
+   162→
+   163→  const handleDelete = async () => {
+   164→    if (!deleteId) return;
+   165→    setDeleting(true);
+   166→    try {
+   167→      const res = await fetch(`/api/guesthouses/${deleteId}`, {
+   168→        method: 'DELETE',
+   169→      });
+   170→      if (!res.ok) throw new Error('Delete failed');
+   171→      toast({ title: 'Deleted', description: 'Record removed successfully.' });
+   172→      fetchData();
+   173→    } catch {
+   174→      toast({
+   175→        title: 'Delete Failed',
+   176→        description: 'Could not delete the record.',
+   177→        variant: 'destructive',
+   178→      });
+   179→    } finally {
+   180→      setDeleting(false);
+   181→      setDeleteId(null);
+   182→    }
+   183→  };
+   184→
+   185→  const openEdit = (item: GuestHouse) => {
+   186→    setEditItem(item);
+   187→    setEditForm({
+   188→      organizationName: item.organizationName || '',
+   189→      subCity: item.subCity,
+   190→      area: item.area,
+   191→      specificAddress: item.specificAddress,
+   192→      numberOfRooms: String(item.numberOfRooms),
+   193→      licenseType: item.licenseType,
+   194→      licenseLevel: item.licenseLevel,
+   195→      licenseNumber: item.licenseNumber || '',
+   196→      ownerName: item.ownerName || '',
+   197→      contactName: item.contactName || '',
+   198→      contactPhone: item.contactPhone || '',
+   199→    });
+   200→    setEditAreas(getAreasForSubCity(item.subCity));
+   201→  };
+   202→
+   203→  const handleEditSubCityChange = (value: string) => {
+   204→    if (!editForm) return;
+   205→ setEditAreas(getAreasForSubCity(value));
+   206→    setEditForm({ ...editForm, subCity: value, area: '' });
+   207→  };
+   208→
+   209→  const handleSave = async () => {
+   210→    if (!editItem || !editForm) return;
+   211→    setSaving(true);
+   212→    try {
+   213→      const res = await fetch(`/api/guesthouses/${editItem.id}`, {
+   214→        method: 'PUT',
+   215→        headers: { 'Content-Type': 'application/json' },
+   216→        body: JSON.stringify(editForm),
+   217→      });
+   218→      if (!res.ok) throw new Error('Update failed');
+   219→      toast({ title: 'Updated', description: 'Record updated successfully.' });
+   220→      setEditItem(null);
+   221→      setEditForm(null);
+   222→      fetchData();
+   223→    } catch {
+   224→      toast({
+   225→        title: 'Update Failed',
+   226→        description: 'Could not update the record.',
+   227→        variant: 'destructive',
+   228→      });
+   229→    } finally {
+   230→      setSaving(false);
+   231→    }
+   232→  };
+   233→
+   234→  const handleExportCSV = async () => {
+   235→    try {
+   236→      const params = new URLSearchParams();
+   237→      if (filterSubCity) params.set('subCity', filterSubCity);
+   238→      if (filterArea) params.set('area', filterArea);
+   239→
+   240→      const res = await fetch(`/api/guesthouses/export?${params}`);
+   241→      if (!res.ok) throw new Error('Export failed');
+   242→      const blob = await res.blob();
+   243→      const url = window.URL.createObjectURL(blob);
+   244→      const a = document.createElement('a');
+   245→      a.href = url;
+   246→      a.download = `bishoftu_guesthouses_survey_${new Date().toISOString().split('T')[0]}.csv`;
+   247→      document.body.appendChild(a);
+   248→      a.click();
+   249→      a.remove();
+   250→      window.URL.revokeObjectURL(url);
+   251→      toast({ title: 'Exported', description: 'CSV file downloaded.' });
+   252→    } catch {
+   253→      toast({
+   254→        title: 'Export Failed',
+   255→        description: 'Could not export data.',
+   256→        variant: 'destructive',
+   257→      });
+   258→    }
+   259→  };
+   260→
+   261→  const handleExportExcel = async () => {
+   262→    try {
+   263→      const params = new URLSearchParams();
+   264→      if (filterSubCity) params.set('subCity', filterSubCity);
+   265→      if (filterArea) params.set('area', filterArea);
+   266→
+   267→      const res = await fetch(`/api/guesthouses/export/excel?${params}`);
+   268→      if (!res.ok) throw new Error('Excel export failed');
+   269→      const blob = await res.blob();
+   270→      const url = window.URL.createObjectURL(blob);
+   271→      const a = document.createElement('a');
+   272→      a.href = url;
+   273→      a.download = `bishoftu_guesthouses_survey_${new Date().toISOString().split('T')[0]}.xlsx`;
+   274→      document.body.appendChild(a);
+   275→      a.click();
+   276→      a.remove();
+   277→      window.URL.revokeObjectURL(url);
+   278→      toast({ title: 'Exported', description: 'Excel file downloaded.' });
+   279→    } catch {
+   280→      toast({
+   281→        title: 'Export Failed',
+   282→        description: 'Could not export Excel file.',
+   283→        variant: 'destructive',
+   284→      });
+   285→    }
+   286→  };
+   287→
+   288→  return (
+   289→    <div className="space-y-4">
+   290→      {/* Search & Filters */}
+   291→      <Card>
+   292→        <CardHeader className="pb-3">
+   293→          <CardTitle className="flex items-center justify-between">
+   294→            <span className="flex items-center gap-2 text-lg">
+   295→              <Building2 className="h-5 w-5 text-emerald-600" />
+   296→              Collected Data
+   297→            </span>
+   298→            <Badge variant="secondary" className="text-sm">
+   299→              {total} records
+   300→            </Badge>
+   301→          </CardTitle>
+   302→          <CardDescription>View and manage all collected survey data</CardDescription>
+   303→        </CardHeader>
+   304→        <CardContent className="space-y-3">
+   305→          <div className="relative">
+   306→            <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
+   307→            <Input
+   308→              placeholder="Search by name, address, owner..."
+   309→              className="pl-9"
+   310→              value={search}
+   311→              onChange={(e) => {
+   312→                setSearch(e.target.value);
+   313→                setPage(1);
+   314→              }}
+   315→            />
+   316→          </div>
+   317→
+   318→          <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
+   319→            <Select
+   320→              value={filterSubCity}
+   321→              onValueChange={handleSubCityFilterChange}
+   322→            >
+   323→              <SelectTrigger>
+   324→                <SelectValue placeholder="Filter by sub-city" />
+   325→              </SelectTrigger>
+   326→              <SelectContent>
+   327→                {getAllSubCities().map((sc) => (
+   328→                  <SelectItem key={sc} value={sc}>{sc}</SelectItem>
+   329→                ))}
+   330→              </SelectContent>
+   331→            </Select>
+   332→
+   333→            <Select
+   334→              value={filterArea}
+   335→              onValueChange={(v) => { setFilterArea(v); setPage(1); }}
+   336→              disabled={!filterSubCity}
+   337→            >
+   338→              <SelectTrigger>
+   339→                <SelectValue placeholder={filterSubCity ? 'Filter by area' : 'Select sub-city first'} />
+   340→              </SelectTrigger>
+   341→              <SelectContent>
+   342→                {areas.map((a) => (
+   343→                  <SelectItem key={a} value={a}>{a}</SelectItem>
+   344→                ))}
+   345→              </SelectContent>
+   346→            </Select>
+   347→          </div>
+   348→
+   349→          <div className="flex flex-wrap gap-2">
+   350→            <Button variant="outline" size="sm" onClick={fetchData}>
+   351→              <RefreshCw className="mr-1 h-4 w-4" /> Refresh
+   352→            </Button>
+   353→            <Button variant="outline" size="sm" onClick={handleExportCSV}>
+   354→              <Download className="mr-1 h-4 w-4" /> CSV
+   355→            </Button>
+   356→            <Button size="sm" className="bg-emerald-600 hover:bg-emerald-700" onClick={handleExportExcel}>
+   357→              <FileSpreadsheet className="mr-1 h-4 w-4" /> Excel
+   358→            </Button>
+   359→          </div>
+   360→        </CardContent>
+   361→      </Card>
+   362→
+   363→      {/* Data Table */}
+   364→      {loading ? (
+   365→        <Card>
+   366→          <CardContent className="p-4 space-y-3">
+   367→            <Skeleton className="h-10 w-full" />
+   368→            {[1, 2, 3, 4].map((i) => (
+   369→              <Skeleton key={i} className="h-12 w-full" />
+   370→            ))}
+   371→          </CardContent>
+   372→        </Card>
+   373→      ) : data.length === 0 ? (
+   374→        <Card>
+   375→          <CardContent className="flex flex-col items-center justify-center py-12 text-center">
+   376→            <Building2 className="mb-3 h-12 w-12 text-muted-foreground/40" />
+   377→            <p className="text-lg font-medium text-muted-foreground">No records found</p>
+   378→            <p className="text-sm text-muted-foreground/70">
+   379→              {search || filterSubCity ? 'Try adjusting your filters' : 'Submit a survey to see data here'}
+   380→            </p>
+   381→          </CardContent>
+   382→        </Card>
+   383→      ) : (
+   384→        <Card>
+   385→          <CardContent className="p-0">
+   386→            {/* Desktop Table */}
+   387→            <div className="hidden md:block overflow-x-auto">
+   388→              <table className="w-full text-sm">
+   389→                <thead>
+   390→                  <tr className="border-b bg-muted/50">
+   391→                    <th className="px-3 py-3 text-left font-semibold text-muted-foreground whitespace-nowrap">#</th>
+   392→                    <th className="px-3 py-3 text-left font-semibold text-muted-foreground whitespace-nowrap">Organization / Dhaabbataa</th>
+   393→                    <th className="px-3 py-3 text-left font-semibold text-muted-foreground whitespace-nowrap">Sub-City</th>
+   394→                    <th className="px-3 py-3 text-left font-semibold text-muted-foreground whitespace-nowrap">Area</th>
+   395→                    <th className="px-3 py-3 text-left font-semibold text-muted-foreground whitespace-nowrap">Address</th>
+   396→                    <th className="px-3 py-3 text-center font-semibold text-muted-foreground whitespace-nowrap">Rooms</th>
+   397→                    <th className="px-3 py-3 text-left font-semibold text-muted-foreground whitespace-nowrap">License Type</th>
+   398→                    <th className="px-3 py-3 text-left font-semibold text-muted-foreground whitespace-nowrap">License Level</th>
+   399→                    <th className="px-3 py-3 text-left font-semibold text-muted-foreground whitespace-nowrap">License No.</th>
+   400→                    <th className="px-3 py-3 text-left font-semibold text-muted-foreground whitespace-nowrap">Owner</th>
+   401→                    <th className="px-3 py-3 text-left font-semibold text-muted-foreground whitespace-nowrap">Contact</th>
+   402→                    <th className="px-3 py-3 text-left font-semibold text-muted-foreground whitespace-nowrap">Phone</th>
+   403→                    <th className="px-3 py-3 text-left font-semibold text-muted-foreground whitespace-nowrap">Surveyor</th>
+   404→                    <th className="px-3 py-3 text-left font-semibold text-muted-foreground whitespace-nowrap">Date</th>
+   405→                    <th className="px-3 py-3 text-center font-semibold text-muted-foreground whitespace-nowrap">Actions</th>
+   406→                  </tr>
+   407→                </thead>
+   408→                <tbody>
+   409→                  {data.map((item, idx) => (
+   410→                    <tr key={item.id} className="border-b last:border-b-0 hover:bg-muted/30 transition-colors">
+   411→                      <td className="px-3 py-2.5 text-muted-foreground text-xs">{(page - 1) * 50 + idx + 1}</td>
+   412→                      <td className="px-3 py-2.5 font-medium max-w-[160px] truncate" title={item.organizationName || item.guestHouseName}>
+   413→                        {item.organizationName || item.guestHouseName}
+   414→                      </td>
+   415→                      <td className="px-3 py-2.5 whitespace-nowrap">{item.subCity}</td>
+   416→                      <td className="px-3 py-2.5 whitespace-nowrap">{item.area}</td>
+   417→                      <td className="px-3 py-2.5 max-w-[140px] truncate" title={item.specificAddress}>{item.specificAddress}</td>
+   418→                      <td className="px-3 py-2.5 text-center">
+   419→                        <span className="inline-flex items-center justify-center h-6 min-w-[24px] rounded-full bg-emerald-100 text-emerald-700 text-xs font-semibold px-1.5">
+   420→                          {item.numberOfRooms}
+   421→                        </span>
+   422→                      </td>
+   423→                      <td className="px-3 py-2.5 whitespace-nowrap"><Badge variant="outline" className="text-xs font-normal">{item.licenseType}</Badge></td>
+   424→                      <td className="px-3 py-2.5 whitespace-nowrap"><Badge variant="secondary" className="text-xs font-normal">{item.licenseLevel}</Badge></td>
+   425→                      <td className="px-3 py-2.5 whitespace-nowrap font-mono text-xs">{item.licenseNumber || '-'}</td>
+   426→                      <td className="px-3 py-2.5 max-w-[120px] truncate" title={item.ownerName || undefined}>{item.ownerName || '-'}</td>
+   427→                      <td className="px-3 py-2.5 max-w-[120px] truncate" title={item.contactName || undefined}>{item.contactName || '-'}</td>
+   428→                      <td className="px-3 py-2.5 whitespace-nowrap">
+   429→                        <a href={`tel:${item.contactPhone || ''}`} className="text-emerald-600 hover:underline text-xs">{item.contactPhone || '-'}</a>
+   430→                      </td>
+   431→                      <td className="px-3 py-2.5 max-w-[100px] truncate text-xs text-muted-foreground" title={item.surveyorName || undefined}>{item.surveyorName || '-'}</td>
+   432→                      <td className="px-3 py-2.5 whitespace-nowrap text-xs text-muted-foreground">{new Date(item.createdAt).toLocaleDateString('en-GB')}</td>
+   433→                      <td className="px-3 py-2.5">
+   434→                        <div className="flex items-center justify-center gap-0.5">
+   435→                          <Button variant="ghost" size="icon" className="h-7 w-7" onClick={() => openEdit(item)}>
+   436→                            <Pencil className="h-3.5 w-3.5 text-blue-600" />
+   437→                          </Button>
+   438→                          <Button variant="ghost" size="icon" className="h-7 w-7" onClick={() => setViewItem(item)}>
+   439→                            <Eye className="h-3.5 w-3.5" />
+   440→                          </Button>
+   441→                          <Button variant="ghost" size="icon" className="h-7 w-7 text-red-500 hover:text-red-600 hover:bg-red-50" onClick={() => setDeleteId(item.id)}>
+   442→                            <Trash2 className="h-3.5 w-3.5" />
+   443→                          </Button>
+   444→                        </div>
+   445→                      </td>
+   446→                    </tr>
+   447→                  ))}
+   448→                </tbody>
+   449→              </table>
+   450→            </div>
+   451→
+   452→            {/* Mobile Cards */}
+   453→            <div className="md:hidden divide-y">
+   454→              {data.map((item, idx) => (
+   455→                <div key={item.id} className="p-3 space-y-2">
+   456→                  <div className="flex items-start justify-between gap-2">
+   457→                    <div className="min-w-0 flex-1">
+   458→                      <p className="text-xs text-muted-foreground">#{(page - 1) * 50 + idx + 1}</p>
+   459→                      <p className="font-semibold text-sm truncate">{item.organizationName || item.guestHouseName}</p>
+   460→                      <p className="text-xs text-muted-foreground">{item.area}, {item.subCity}</p>
+   461→                    </div>
+   462→                    <div className="flex gap-0.5 shrink-0">
+   463→                      <Button variant="ghost" size="icon" className="h-7 w-7" onClick={() => openEdit(item)}>
+   464→                        <Pencil className="h-3.5 w-3.5 text-blue-600" />
+   465→                      </Button>
+   466→                      <Button variant="ghost" size="icon" className="h-7 w-7" onClick={() => setViewItem(item)}>
+   467→                        <Eye className="h-3.5 w-3.5" />
+   468→                      </Button>
+   469→                      <Button variant="ghost" size="icon" className="h-7 w-7 text-red-500" onClick={() => setDeleteId(item.id)}>
+   470→                        <Trash2 className="h-3.5 w-3.5" />
+   471→                      </Button>
+   472→                    </div>
+   473→                  </div>
+   474→                  <div className="grid grid-cols-2 gap-x-4 gap-y-1 text-xs">
+   475→                    <div><span className="text-muted-foreground">Rooms:</span> <span className="font-medium">{item.numberOfRooms}</span></div>
+   476→                    <div><span className="text-muted-foreground">License:</span> <span className="font-medium">{item.licenseType}</span></div>
+   477→                    <div><span className="text-muted-foreground">Level:</span> <span className="font-medium">{item.licenseLevel}</span></div>
+   478→                    <div><span className="text-muted-foreground">Owner:</span> <span className="font-medium truncate">{item.ownerName || '-'}</span></div>
+   479→                    <div><span className="text-muted-foreground">Contact:</span> <span className="font-medium truncate">{item.contactName || '-'}</span></div>
+   480→                    <div><span className="text-muted-foreground">Phone:</span> <a href={`tel:${item.contactPhone || ''}`} className="font-medium text-emerald-600">{item.contactPhone || '-'}</a></div>
+   481→                  </div>
+   482→                  <p className="text-[10px] text-muted-foreground text-right">
+   483→                    {item.surveyorName && <span>{item.surveyorName} - </span>}
+   484→                    {new Date(item.createdAt).toLocaleDateString('en-GB')}
+   485→                  </p>
+   486→                </div>
+   487→              ))}
+   488→            </div>
+   489→          </CardContent>
+   490→        </Card>
+   491→      )}
+   492→
+   493→      {/* Pagination */}
+   494→      {totalPages > 1 && (
+   495→        <div className="flex items-center justify-center gap-2">
+   496→          <Button variant="outline" size="icon" className="h-8 w-8" onClick={() => setPage((p) => Math.max(1, p - 1))} disabled={page === 1}>
+   497→            <ChevronLeft className="h-4 w-4" />
+   498→          </Button>
+   499→          <span className="text-sm text-muted-foreground">Page {page} of {totalPages}</span>
+   500→          <Button variant="outline" size="icon" className="h-8 w-8" onClick={() => setPage((p) => Math.min(totalPages, p + 1))} disabled={page === totalPages}>
+   501→            <ChevronRight className="h-4 w-4" />
+   502→          </Button>
+   503→        </div>
+   504→      )}
+   505→
+   506→      {/* Delete Confirmation Dialog */}
+   507→      <AlertDialog open={!!deleteId} onOpenChange={(open) => !open && setDeleteId(null)}>
+   508→        <AlertDialogContent>
+   509→          <AlertDialogHeader>
+   510→            <AlertDialogTitle>Delete Record?</AlertDialogTitle>
+   511→            <AlertDialogDescription>
+   512→              This action cannot be undone. This will permanently delete the guest house survey record.
+   513→            </AlertDialogDescription>
+   514→          </AlertDialogHeader>
+   515→          <AlertDialogFooter>
+   516→            <AlertDialogCancel disabled={deleting}>Cancel</AlertDialogCancel>
+   517→            <AlertDialogAction onClick={handleDelete} disabled={deleting} className="bg-red-600 hover:bg-red-700">
+   518→              {deleting ? 'Deleting...' : 'Delete'}
+   519→            </AlertDialogAction>
+   520→          </AlertDialogFooter>
+   521→        </AlertDialogContent>
+   522→      </AlertDialog>
+   523→
+   524→      {/* View Detail Dialog */}
+   525→      <Dialog open={!!viewItem} onOpenChange={(open) => !open && setViewItem(null)}>
+   526→        <DialogContent className="max-h-[85vh] overflow-y-auto sm:max-w-lg">
+   527→          {viewItem && (
+   528→            <>
+   529→              <DialogHeader>
+   530→                <DialogTitle className="text-xl">{viewItem.organizationName || viewItem.guestHouseName}</DialogTitle>
+   531→                <DialogDescription>{viewItem.area}, {viewItem.subCity}</DialogDescription>
+   532→              </DialogHeader>
+   533→              <div className="space-y-4 pt-2">
+   534→                <div className="grid grid-cols-2 gap-3">
+   535→                  <div className="rounded-lg bg-muted/50 p-3">
+   536→                    <p className="text-xs text-muted-foreground">Rooms / Qubeettii</p>
+   537→                    <p className="text-lg font-semibold text-emerald-600">{viewItem.numberOfRooms}</p>
+   538→                  </div>
+   539→                  <div className="rounded-lg bg-muted/50 p-3">
+   540→                    <p className="text-xs text-muted-foreground">License No. / Lakofsaa Eyyema</p>
+   541→                    <p className="text-lg font-semibold text-emerald-600">{viewItem.licenseNumber || '-'}</p>
+   542→                  </div>
+   543→                </div>
+   544→                <div className="space-y-2">
+   545→                  <h4 className="text-sm font-semibold">License Details / Odeeffannoo Eyyemaa</h4>
+   546→                  <div className="rounded-lg border p-3 space-y-1.5">
+   547→                    <div className="flex justify-between text-sm">
+   548→                      <span className="text-muted-foreground">Type / Goossa Eyyema</span>
+   549→                      <span className="font-medium">{viewItem.licenseType}</span>
+   550→                    </div>
+   551→                    <div className="flex justify-between text-sm">
+   552→                      <span className="text-muted-foreground">Level / Saddarkaa Eyyema</span>
+   553→                      <span className="font-medium">{viewItem.licenseLevel}</span>
+   554→                    </div>
+   555→                  </div>
+   556→                </div>
+   557→                <div className="space-y-2">
+   558→                  <h4 className="text-sm font-semibold">Address / Teessoo</h4>
+   559→                  <p className="text-sm text-muted-foreground rounded-lg border p-3">{viewItem.specificAddress}</p>
+   560→                </div>
+   561→                <div className="space-y-2">
+   562→                  <h4 className="text-sm font-semibold">Contact Details / Odeeffannoo Quunnamtii</h4>
+   563→                  <div className="rounded-lg border p-3 space-y-1.5">
+   564→                    <div className="flex justify-between text-sm">
+   565→                      <span className="text-muted-foreground">Owner / Abbaa Qaabeyee</span>
+   566→                      <span className="font-medium">{viewItem.ownerName || '-'}</span>
+   567→                    </div>
+   568→                    <div className="flex justify-between text-sm">
+   569→                      <span className="text-muted-foreground">Contact / Nama Adadura Qunnamnu</span>
+   570→                      <span className="font-medium">{viewItem.contactName || '-'}</span>
+   571→                    </div>
+   572→                    <div className="flex justify-between text-sm">
+   573→                      <span className="text-muted-foreground">Phone / Bilbila</span>
+   574→                      <span className="font-medium"><a href={`tel:${viewItem.contactPhone || ''}`} className="text-emerald-600 hover:underline">{viewItem.contactPhone || '-'}</a></span>
+   575→                    </div>
+   576→                  </div>
+   577→                </div>
+   578→                {viewItem.surveyorName && (
+   579→                  <p className="text-xs text-muted-foreground">
+   580→                    Surveyed by: {viewItem.surveyorName} on {new Date(viewItem.createdAt).toLocaleDateString('en-GB')}
+   581→                  </p>
+   582→                )}
+   583→              </div>
+   584→            </>
+   585→          )}
+   586→        </DialogContent>
+   587→      </Dialog>
+   588→
+   589→      {/* Edit Dialog */}
+   590→      <Dialog open={!!editItem} onOpenChange={(open) => { if (!open) { setEditItem(null); setEditForm(null); } }}>
+   591→        <DialogContent className="max-h-[85vh] overflow-y-auto sm:max-w-lg">
+   592→          <DialogHeader>
+   593→            <DialogTitle className="flex items-center gap-2">
+   594→              <Pencil className="h-5 w-5 text-blue-600" />
+   595→              Edit Record
+   596→            </DialogTitle>
+   597→            <DialogDescription>
+   598→              {editItem?.organizationName || editItem?.guestHouseName}
+   599→            </DialogDescription>
+   600→          </DialogHeader>
+   601→
+   602→          {editForm && (
+   603→            <div className="space-y-4 pt-2">
+   604→              {/* Establishment */}
+   605→              <div className="space-y-3 rounded-lg border p-3">
+   606→                <h4 className="text-sm font-semibold text-emerald-700">Establishment / Qophiin</h4>
+   607→                <div className="space-y-2">
+   608→                  <Label className="text-xs">Organization Name / Maqaa Dhaabbataa <span className="text-red-500">*</span></Label>
+   609→                  <Input value={editForm.organizationName} onChange={(e) => setEditForm({ ...editForm, organizationName: e.target.value })} />
+   610→                </div>
+   611→                <div className="grid grid-cols-2 gap-3">
+   612→                  <div className="space-y-2">
+   613→                    <Label className="text-xs">Sub-City / Kuttaa Maggalaa <span className="text-red-500">*</span></Label>
+   614→                    <Select value={editForm.subCity} onValueChange={handleEditSubCityChange}>
+   615→                      <SelectTrigger className="text-xs"><SelectValue /></SelectTrigger>
+   616→                      <SelectContent>
+   617→                        {getAllSubCities().map((sc) => (<SelectItem key={sc} value={sc}>{sc}</SelectItem>))}
+   618→                      </SelectContent>
+   619→                    </Select>
+   620→                  </div>
+   621→                  <div className="space-y-2">
+   622→                    <Label className="text-xs">Area / Ganda <span className="text-red-500">*</span></Label>
+   623→                    <Select value={editForm.area} onValueChange={(v) => setEditForm({ ...editForm, area: v })} disabled={!editForm.subCity}>
+   624→                      <SelectTrigger className="text-xs"><SelectValue /></SelectTrigger>
+   625→                      <SelectContent>
+   626→                        {editAreas.map((a) => (<SelectItem key={a} value={a}>{a}</SelectItem>))}
+   627→                      </SelectContent>
+   628→                    </Select>
+   629→                  </div>
+   630→                </div>
+   631→                <div className="space-y-2">
+   632→                  <Label className="text-xs">Specific Address / Teessoo Qaamaa <span className="text-red-500">*</span></Label>
+   633→                  <Input value={editForm.specificAddress} onChange={(e) => setEditForm({ ...editForm, specificAddress: e.target.value })} />
+   634→                </div>
+   635→              </div>
+   636→
+   637→              {/* License */}
+   638→              <div className="space-y-3 rounded-lg border p-3">
+   639→                <h4 className="text-sm font-semibold text-blue-700">License & Capacity / Bayyinnafee fi Eyyemma</h4>
+   640→                <div className="space-y-2">
+   641→                  <Label className="text-xs">Number of Rooms / Lakkoofsa Qubeettii <span className="text-red-500">*</span></Label>
+   642→                  <Input type="number" min="1" value={editForm.numberOfRooms} onChange={(e) => setEditForm({ ...editForm, numberOfRooms: e.target.value })} />
+   643→                </div>
+   644→                <div className="grid grid-cols-2 gap-3">
+   645→                  <div className="space-y-2">
+   646→                    <Label className="text-xs">License Type / Goossa Eyyema <span className="text-red-500">*</span></Label>
+   647→                    <Select value={editForm.licenseType} onValueChange={(v) => setEditForm({ ...editForm, licenseType: v })}>
+   648→                      <SelectTrigger className="text-xs"><SelectValue /></SelectTrigger>
+   649→                      <SelectContent>
+   650→                        {LICENSE_TYPES.map((t) => (<SelectItem key={t} value={t}>{t}</SelectItem>))}
+   651→                      </SelectContent>
+   652→                    </Select>
+   653→                  </div>
+   654→                  <div className="space-y-2">
+   655→                    <Label className="text-xs">License Level / Saddarkaa Eyyema <span className="text-red-500">*</span></Label>
+   656→                    <Select value={editForm.licenseLevel} onValueChange={(v) => setEditForm({ ...editForm, licenseLevel: v })}>
+   657→                      <SelectTrigger className="text-xs"><SelectValue /></SelectTrigger>
+   658→                      <SelectContent>
+   659→                        {LICENSE_LEVELS.map((l) => (<SelectItem key={l} value={l}>{l}</SelectItem>))}
+   660→                      </SelectContent>
+   661→                    </Select>
+   662→                  </div>
+   663→                </div>
+   664→                <div className="space-y-2">
+   665→                  <Label className="text-xs">License Number / Lakofsaa Eyyema <span className="text-red-500">*</span></Label>
+   666→                  <Input value={editForm.licenseNumber} onChange={(e) => setEditForm({ ...editForm, licenseNumber: e.target.value })} />
+   667→                </div>
+   668→              </div>
+   669→
+   670→              {/* Contact */}
+   671→              <div className="space-y-3 rounded-lg border p-3">
+   672→                <h4 className="text-sm font-semibold text-purple-700">Contact / Quunnamtii</h4>
+   673→                <div className="space-y-2">
+   674→                  <Label className="text-xs">Owner Name / Maqaa Abbaa Qaabeyee <span className="text-red-500">*</span></Label>
+   675→                  <Input value={editForm.ownerName} onChange={(e) => setEditForm({ ...editForm, ownerName: e.target.value })} />
+   676→                </div>
+   677→                <div className="space-y-2">
+   678→                  <Label className="text-xs">Contact Person / Nama Adadura Qunnamnu <span className="text-red-500">*</span></Label>
+   679→                  <Input value={editForm.contactName} onChange={(e) => setEditForm({ ...editForm, contactName: e.target.value })} />
+   680→                </div>
+   681→                <div className="space-y-2">
+   682→                  <Label className="text-xs">Phone Number / Lakkoofsa Bilbila <span className="text-red-500">*</span></Label>
+   683→                  <Input type="tel" value={editForm.contactPhone} onChange={(e) => setEditForm({ ...editForm, contactPhone: e.target.value })} />
+   684→                </div>
+   685→              </div>
+   686→
+   687→              <DialogFooter className="gap-2 sm:gap-0">
+   688→                <Button variant="outline" onClick={() => { setEditItem(null); setEditForm(null); }}>Cancel</Button>
+   689→                <Button className="bg-emerald-600 hover:bg-emerald-700" onClick={handleSave} disabled={saving}>
+   690→                  {saving ? <Loader2 className="mr-1 h-4 w-4 animate-spin" /> : <Save className="mr-1 h-4 w-4" />}
+   691→                  {saving ? 'Saving...' : 'Save Changes'}
+   692→                </Button>
+   693→              </DialogFooter>
+   694→            </div>
+   695→          )}
+   696→        </DialogContent>
+   697→      </Dialog>
+   698→    </div>
+   699→  );
+   700→}
+   701→

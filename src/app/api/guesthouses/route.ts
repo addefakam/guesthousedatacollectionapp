@@ -34,6 +34,16 @@ export async function POST(request: NextRequest) {
       );
     }
 
+    // Validate Ethiopian phone number
+    const phoneClean = String(contactPhone).replace(/[\s-]/g, '');
+    const ethPhoneRegex = /^(\+251|251|0)?(9|7)\d{8}$/;
+    if (!ethPhoneRegex.test(phoneClean)) {
+      return NextResponse.json(
+        { error: 'Invalid phone number. Use Ethiopian format: +251 9X XXX XXXX or 09XXXXXXXX' },
+        { status: 400 }
+      );
+    }
+
     const guestHouse = await db.guestHouse.create({
       data: {
         guestHouseName: organizationName, // Use organization name as guest house name
