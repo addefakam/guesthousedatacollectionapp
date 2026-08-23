@@ -235,7 +235,7 @@ export default function SurveyForm({ onSubmit, surveyorName, surveyorId, isOnlin
               <CardHeader className="pb-2 sm:pb-3">
                 <CardTitle className="flex items-center gap-1.5 text-base sm:gap-2 sm:text-lg">
                   <Building2 className="h-4 w-4 shrink-0 text-emerald-600 sm:h-5 sm:w-5" />
-                  <span className="leading-tight">Establishment Information<br /><span className="text-sm font-normal text-muted-foreground sm:text-base">Odeeffannoo Qophii</span></span>
+                  <span className="leading-tight">Odeeffannoo Hundeeffama<br /><span className="text-sm font-normal text-muted-foreground sm:text-base">Establishment information</span></span>
                 </CardTitle>
                 <CardDescription className="text-xs sm:text-sm">Basic details about the establishment</CardDescription>
               </CardHeader>
@@ -274,7 +274,7 @@ export default function SurveyForm({ onSubmit, surveyorName, surveyorId, isOnlin
               <CardHeader className="pb-2 sm:pb-3">
                 <CardTitle className="flex items-center gap-1.5 text-base sm:gap-2 sm:text-lg">
                   <FileText className="h-4 w-4 shrink-0 text-blue-600 sm:h-5 sm:w-5" />
-                  <span className="leading-tight">Capacity & License<br /><span className="text-sm font-normal text-muted-foreground sm:text-base">Bayyinnafee fi Eyyemma</span></span>
+                  <span className="leading-tight">Dandeettii fi Hayyama<br /><span className="text-sm font-normal text-muted-foreground sm:text-base">Capacity and license</span></span>
                 </CardTitle>
                 <CardDescription className="text-xs sm:text-sm">Room capacity and licensing information</CardDescription>
               </CardHeader>
@@ -340,7 +340,7 @@ export default function SurveyForm({ onSubmit, surveyorName, surveyorId, isOnlin
               <CardHeader className="pb-2 sm:pb-3">
                 <CardTitle className="flex items-center gap-1.5 text-base sm:gap-2 sm:text-lg">
                   <Eye className="h-4 w-4 shrink-0 text-blue-600 sm:h-5 sm:w-5" />
-                  <span className="leading-tight">Review & Confirm<br /><span className="text-sm font-normal text-muted-foreground sm:text-base">Ilaali fi Mirkanaa</span></span>
+                  <span className="leading-tight">Odeeffannoo Quunnamtii<br /><span className="text-sm font-normal text-muted-foreground sm:text-base">Review and confirm</span></span>
                 </CardTitle>
                 <CardDescription className="text-xs sm:text-sm">Review all data before submitting / Galii hunda ilaalii booda erguu</CardDescription>
               </CardHeader>
