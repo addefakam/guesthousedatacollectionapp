@@ -16,7 +16,7 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
-  title: 'Bishoftu Guest House Survey - Data Collection',
+  title: 'Qorannoo Mana Keessummootaa Bishooftuu / Bishoftu Guest House Survey',
   description: 'Mobile-based data collection system for guest house service survey in Bishoftu City, covering sub-cities Dukam, Chelaleka, and Debaayyuu.',
   icons: {
     icon: '/icon.png',

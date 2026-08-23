@@ -25,7 +25,7 @@ export async function GET(request: NextRequest) {
     }
 
     const workbook = new ExcelJS.Workbook();
-    workbook.creator = 'Bishoftu Guest House Survey System';
+    workbook.creator = 'Qorannoo Mana Keessummootaa Bishooftuu / Bishoftu Guest House Survey';
     workbook.created = new Date();
 
     const sheet = workbook.addWorksheet('Survey Data', {

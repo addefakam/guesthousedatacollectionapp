@@ -44,7 +44,7 @@ export default function LoginForm() {
           <div className="mx-auto mb-3 flex h-14 w-14 items-center justify-center rounded-2xl bg-emerald-600 text-white">
             <ClipboardList className="h-7 w-7" />
           </div>
-          <CardTitle className="text-xl">Bishoftu Survey</CardTitle>
+          <CardTitle className="text-xl">Qorannoo Mana Keessummootaa Bishooftuu</CardTitle>
           <CardDescription>
             Guest House Data Collection System
           </CardDescription>

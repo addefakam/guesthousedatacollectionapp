@@ -58,7 +58,7 @@ export default function Home() {
           <div className="flex min-w-0 items-center gap-2 sm:gap-3">
             <img src="/icon.png" alt="BGH Survey" className="h-8 w-8 shrink-0 rounded-lg sm:h-10 sm:w-10 sm:rounded-xl" />
             <div className="min-w-0">
-              <h1 className="truncate text-sm font-bold leading-tight sm:text-lg">Bishoftu Guest House Survey</h1>
+              <h1 className="truncate text-sm font-bold leading-tight sm:text-lg">Qorannoo Mana Keessummootaa Bishooftuu</h1>
               <p className="truncate text-[10px] text-muted-foreground sm:text-xs">
                 {isAdmin ? 'Admin' : 'Data Collector'}: {userName}
               </p>
@@ -156,7 +156,7 @@ export default function Home() {
       {/* Footer */}
       <footer className="fixed bottom-0 left-0 right-0 z-40 border-t bg-white safe-bottom">
         <div className="mx-auto flex max-w-2xl items-center justify-between px-3 py-1.5 sm:px-4 sm:py-2">
-          <span className="truncate text-[10px] text-muted-foreground sm:text-xs">Bishoftu City Guest House Survey</span>
+          <span className="truncate text-[10px] text-muted-foreground sm:text-xs">Bishoftu Guest House Survey</span>
           <span className={`flex shrink-0 items-center gap-1 text-[10px] sm:text-xs ${isOnline ? 'text-emerald-600' : 'text-amber-500'}`}>
             {isOnline ? <Wifi className="h-3 w-3" /> : <WifiOff className="h-3 w-3" />}
             {isOnline ? 'Online' : 'Offline'}
