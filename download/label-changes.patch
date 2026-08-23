@@ -1,0 +1,324 @@
+diff --git a/next.config.ts b/next.config.ts
+old mode 100644
+new mode 100755
+index 0bd2f11..1727cde
+--- a/next.config.ts
++++ b/next.config.ts
+@@ -1,7 +1,6 @@
+ import type { NextConfig } from "next";
+ 
+ const nextConfig: NextConfig = {
+-  output: "standalone",
+   /* config options here */
+   typescript: {
+     ignoreBuildErrors: true,
+diff --git a/package.json b/package.json
+old mode 100644
+new mode 100755
+diff --git a/public/manifest.json b/public/manifest.json
+old mode 100644
+new mode 100755
+index 86ccfc5..d8c5255
+--- a/public/manifest.json
++++ b/public/manifest.json
+@@ -1,5 +1,5 @@
+ {
+-  "name": "Bishoftu Guest House Survey",
++  "name": "Qorannoo Mana Keessummootaa Bishooftuu / Bishoftu Guest House Survey",
+   "short_name": "BGH Survey",
+   "description": "Mobile data collection for guest house service survey in Bishoftu City",
+   "start_url": "/",
+diff --git a/src/app/api/guesthouses/[id]/route.ts b/src/app/api/guesthouses/[id]/route.ts
+old mode 100644
+new mode 100755
+index 0bcaa97..78169bd
+--- a/src/app/api/guesthouses/[id]/route.ts
++++ b/src/app/api/guesthouses/[id]/route.ts
+@@ -61,6 +61,18 @@ export async function PUT(
+       );
+     }
+ 
++    // Validate phone if provided
++    if (body.contactPhone) {
++      const phoneClean = String(body.contactPhone).replace(/[\s-]/g, '');
++      const ethPhoneRegex = /^(\+251|251|0)?(9|7)\d{8}$/;
++      if (!ethPhoneRegex.test(phoneClean)) {
++        return NextResponse.json(
++          { error: 'Invalid phone number. Use Ethiopian format: +251 9X XXX XXXX or 09XXXXXXXX' },
++          { status: 400 }
++        );
++      }
++    }
++
+     const updated = await db.guestHouse.update({
+       where: { id },
+       data: {
+diff --git a/src/app/api/guesthouses/export/excel/route.ts b/src/app/api/guesthouses/export/excel/route.ts
+old mode 100644
+new mode 100755
+index 2369f4e..eeb7c2a
+--- a/src/app/api/guesthouses/export/excel/route.ts
++++ b/src/app/api/guesthouses/export/excel/route.ts
+@@ -25,7 +25,7 @@ export async function GET(request: NextRequest) {
+     }
+ 
+     const workbook = new ExcelJS.Workbook();
+-    workbook.creator = 'Bishoftu Guest House Survey System';
++    workbook.creator = 'Qorannoo Mana Keessummootaa Bishooftuu / Bishoftu Guest House Survey';
+     workbook.created = new Date();
+ 
+     const sheet = workbook.addWorksheet('Survey Data', {
+@@ -38,7 +38,7 @@ export async function GET(request: NextRequest) {
+       { header: 'Guest House Name', key: 'guestHouseName', width: 28 },
+       { header: 'Organization Name', key: 'organizationName', width: 25 },
+       { header: 'Sub-City / Kuttaa Maggalaa', key: 'subCity', width: 22 },
+-      { header: 'Area / Kebele', key: 'area', width: 20 },
++      { header: 'Werreda', key: 'area', width: 20 },
+       { header: 'Specific Address', key: 'specificAddress', width: 30 },
+       { header: 'Number of Rooms', key: 'numberOfRooms', width: 16 },
+       { header: 'License Type / Goossa Eyyeema', key: 'licenseType', width: 24 },
+diff --git a/src/app/api/guesthouses/export/route.ts b/src/app/api/guesthouses/export/route.ts
+old mode 100644
+new mode 100755
+index ac92d7d..891a660
+--- a/src/app/api/guesthouses/export/route.ts
++++ b/src/app/api/guesthouses/export/route.ts
+@@ -27,7 +27,7 @@ export async function GET(request: NextRequest) {
+       'Guest House Name',
+       'Organization Name',
+       'Sub-City',
+-      'Area/Kebele',
++      'Werreda',
+       'Specific Address',
+       'Number of Rooms',
+       'License Type',
+diff --git a/src/app/api/guesthouses/route.ts b/src/app/api/guesthouses/route.ts
+old mode 100644
+new mode 100755
+index 6580475..129c0ab
+--- a/src/app/api/guesthouses/route.ts
++++ b/src/app/api/guesthouses/route.ts
+@@ -34,6 +34,16 @@ export async function POST(request: NextRequest) {
+       );
+     }
+ 
++    // Validate Ethiopian phone number
++    const phoneClean = String(contactPhone).replace(/[\s-]/g, '');
++    const ethPhoneRegex = /^(\+251|251|0)?(9|7)\d{8}$/;
++    if (!ethPhoneRegex.test(phoneClean)) {
++      return NextResponse.json(
++        { error: 'Invalid phone number. Use Ethiopian format: +251 9X XXX XXXX or 09XXXXXXXX' },
++        { status: 400 }
++      );
++    }
++
+     const guestHouse = await db.guestHouse.create({
+       data: {
+         guestHouseName: organizationName, // Use organization name as guest house name
+diff --git a/src/app/layout.tsx b/src/app/layout.tsx
+old mode 100644
+new mode 100755
+index 51c45ba..a710176
+--- a/src/app/layout.tsx
++++ b/src/app/layout.tsx
+@@ -16,7 +16,7 @@ const geistMono = Geist_Mono({
+ });
+ 
+ export const metadata: Metadata = {
+-  title: 'Bishoftu Guest House Survey - Data Collection',
++  title: 'Qorannoo Mana Keessummootaa Bishooftuu / Bishoftu Guest House Survey',
+   description: 'Mobile-based data collection system for guest house service survey in Bishoftu City, covering sub-cities Dukam, Chelaleka, and Debaayyuu.',
+   icons: {
+     icon: '/icon.png',
+diff --git a/src/app/page.tsx b/src/app/page.tsx
+old mode 100644
+new mode 100755
+index 6706801..ce5d032
+--- a/src/app/page.tsx
++++ b/src/app/page.tsx
+@@ -41,13 +41,13 @@ export default function Home() {
+ 
+   const tabs = isAdmin
+     ? [
+-        { value: 'survey', label: 'Survey', icon: <ClipboardList className="h-4 w-4" /> },
+-        { value: 'data', label: 'Records', icon: <Database className="h-4 w-4" /> },
+-        { value: 'dashboard', label: 'Stats', icon: <BarChart3 className="h-4 w-4" /> },
++        { value: 'survey', label: "Qo'annoo", icon: <ClipboardList className="h-4 w-4" /> },
++        { value: 'data', label: 'Galmeewwan', icon: <Database className="h-4 w-4" /> },
++        { value: 'dashboard', label: 'Istaatiksii', icon: <BarChart3 className="h-4 w-4" /> },
+         { value: 'admin', label: 'Users', icon: <Shield className="h-4 w-4" /> },
+       ]
+     : [
+-        { value: 'survey', label: 'Survey', icon: <ClipboardList className="h-4 w-4" /> },
++        { value: 'survey', label: "Qo'annoo", icon: <ClipboardList className="h-4 w-4" /> },
+       ];
+ 
+   return (
+@@ -58,7 +58,7 @@ export default function Home() {
+           <div className="flex min-w-0 items-center gap-2 sm:gap-3">
+             <img src="/icon.png" alt="BGH Survey" className="h-8 w-8 shrink-0 rounded-lg sm:h-10 sm:w-10 sm:rounded-xl" />
+             <div className="min-w-0">
+-              <h1 className="truncate text-sm font-bold leading-tight sm:text-lg">Bishoftu Guest House Survey</h1>
++              <h1 className="truncate text-sm font-bold leading-tight sm:text-lg">Qorannoo Mana Keessummootaa Bishooftuu</h1>
+               <p className="truncate text-[10px] text-muted-foreground sm:text-xs">
+                 {isAdmin ? 'Admin' : 'Data Collector'}: {userName}
+               </p>
+@@ -156,7 +156,7 @@ export default function Home() {
+       {/* Footer */}
+       <footer className="fixed bottom-0 left-0 right-0 z-40 border-t bg-white safe-bottom">
+         <div className="mx-auto flex max-w-2xl items-center justify-between px-3 py-1.5 sm:px-4 sm:py-2">
+-          <span className="truncate text-[10px] text-muted-foreground sm:text-xs">Bishoftu City Guest House Survey</span>
++          <span className="truncate text-[10px] text-muted-foreground sm:text-xs">Bishoftu Guest House Survey</span>
+           <span className={`flex shrink-0 items-center gap-1 text-[10px] sm:text-xs ${isOnline ? 'text-emerald-600' : 'text-amber-500'}`}>
+             {isOnline ? <Wifi className="h-3 w-3" /> : <WifiOff className="h-3 w-3" />}
+             {isOnline ? 'Online' : 'Offline'}
+diff --git a/src/components/LoginForm.tsx b/src/components/LoginForm.tsx
+old mode 100644
+new mode 100755
+index 413427f..5fd1380
+--- a/src/components/LoginForm.tsx
++++ b/src/components/LoginForm.tsx
+@@ -44,7 +44,7 @@ export default function LoginForm() {
+           <div className="mx-auto mb-3 flex h-14 w-14 items-center justify-center rounded-2xl bg-emerald-600 text-white">
+             <ClipboardList className="h-7 w-7" />
+           </div>
+-          <CardTitle className="text-xl">Bishoftu Survey</CardTitle>
++          <CardTitle className="text-xl">Qorannoo Mana Keessummootaa Bishooftuu</CardTitle>
+           <CardDescription>
+             Guest House Data Collection System
+           </CardDescription>
+diff --git a/src/components/guesthouse/DataList.tsx b/src/components/guesthouse/DataList.tsx
+old mode 100644
+new mode 100755
+index e8d5ac7..7cff73f
+--- a/src/components/guesthouse/DataList.tsx
++++ b/src/components/guesthouse/DataList.tsx
+@@ -391,7 +391,7 @@ export default function DataList({ refreshTrigger }: DataListProps) {
+                     <th className="px-3 py-3 text-left font-semibold text-muted-foreground whitespace-nowrap">#</th>
+                     <th className="px-3 py-3 text-left font-semibold text-muted-foreground whitespace-nowrap">Organization / Dhaabbataa</th>
+                     <th className="px-3 py-3 text-left font-semibold text-muted-foreground whitespace-nowrap">Sub-City</th>
+-                    <th className="px-3 py-3 text-left font-semibold text-muted-foreground whitespace-nowrap">Area</th>
++                    <th className="px-3 py-3 text-left font-semibold text-muted-foreground whitespace-nowrap">Werreda</th>
+                     <th className="px-3 py-3 text-left font-semibold text-muted-foreground whitespace-nowrap">Address</th>
+                     <th className="px-3 py-3 text-center font-semibold text-muted-foreground whitespace-nowrap">Rooms</th>
+                     <th className="px-3 py-3 text-left font-semibold text-muted-foreground whitespace-nowrap">License Type</th>
+@@ -555,7 +555,7 @@ export default function DataList({ refreshTrigger }: DataListProps) {
+                   </div>
+                 </div>
+                 <div className="space-y-2">
+-                  <h4 className="text-sm font-semibold">Address / Teessoo</h4>
++                  <h4 className="text-sm font-semibold">Address / Baka Addaa</h4>
+                   <p className="text-sm text-muted-foreground rounded-lg border p-3">{viewItem.specificAddress}</p>
+                 </div>
+                 <div className="space-y-2">
+@@ -619,7 +619,7 @@ export default function DataList({ refreshTrigger }: DataListProps) {
+                     </Select>
+                   </div>
+                   <div className="space-y-2">
+-                    <Label className="text-xs">Area / Ganda <span className="text-red-500">*</span></Label>
++                    <Label className="text-xs">Werreda <span className="text-red-500">*</span></Label>
+                     <Select value={editForm.area} onValueChange={(v) => setEditForm({ ...editForm, area: v })} disabled={!editForm.subCity}>
+                       <SelectTrigger className="text-xs"><SelectValue /></SelectTrigger>
+                       <SelectContent>
+@@ -629,7 +629,7 @@ export default function DataList({ refreshTrigger }: DataListProps) {
+                   </div>
+                 </div>
+                 <div className="space-y-2">
+-                  <Label className="text-xs">Specific Address / Teessoo Qaamaa <span className="text-red-500">*</span></Label>
++                  <Label className="text-xs">Specific Address / Baka Addaa <span className="text-red-500">*</span></Label>
+                   <Input value={editForm.specificAddress} onChange={(e) => setEditForm({ ...editForm, specificAddress: e.target.value })} />
+                 </div>
+               </div>
+@@ -680,7 +680,7 @@ export default function DataList({ refreshTrigger }: DataListProps) {
+                 </div>
+                 <div className="space-y-2">
+                   <Label className="text-xs">Phone Number / Lakkoofsa Bilbila <span className="text-red-500">*</span></Label>
+-                  <Input type="tel" value={editForm.contactPhone} onChange={(e) => setEditForm({ ...editForm, contactPhone: e.target.value })} />
++                  <Input type="tel" value={editForm.contactPhone} onChange={(e) => setEditForm({ ...editForm, contactPhone: e.target.value.replace(/[^0-9+\s-]/g, '') })} />
+                 </div>
+               </div>
+ 
+diff --git a/src/components/guesthouse/SurveyForm.tsx b/src/components/guesthouse/SurveyForm.tsx
+old mode 100644
+new mode 100755
+index 69c9516..05b4ae6
+--- a/src/components/guesthouse/SurveyForm.tsx
++++ b/src/components/guesthouse/SurveyForm.tsx
+@@ -113,6 +113,12 @@ export default function SurveyForm({ onSubmit, surveyorName, surveyorId, isOnlin
+           toast({ title: 'Field Missing / Qabiyyee Hin Jiru', description: 'All fields in this step are required / Galii hundinuu barbaachisaadha', variant: 'destructive' });
+           return false;
+         }
++        const phoneClean = formData.contactPhone.replace(/[\s-]/g, '');
++        const ethPhoneRegex = /^(\+251|251|0)?(9|7)\d{8}$/;
++        if (!ethPhoneRegex.test(phoneClean)) {
++          toast({ title: 'Invalid Phone / Bilbila Dogoggora', description: 'Enter valid Ethiopian number (e.g., +251 91 234 5678)', variant: 'destructive' });
++          return false;
++        }
+         return true;
+       case 4:
+         if (dataConfirmed !== 'yes') {
+@@ -169,8 +175,8 @@ export default function SurveyForm({ onSubmit, surveyorName, surveyorId, isOnlin
+   const reviewItems = [
+     { label: 'Organization / Dhaabbataa', value: formData.organizationName },
+     { label: 'Sub-City / Kuttaa Maggalaa', value: formData.subCity },
+-    { label: 'Area / Kebele', value: formData.area },
+-    { label: 'Address / Teessoo', value: formData.specificAddress },
++    { label: 'Werreda', value: formData.area },
++    { label: 'Address / Baka Addaa', value: formData.specificAddress },
+     { label: 'Rooms / Qubeettii', value: formData.numberOfRooms },
+     { label: 'License Type / Goossa Eyyema', value: formData.licenseType },
+     { label: 'License Level / Saddarkaa Eyyema', value: formData.licenseLevel },
+@@ -229,7 +235,7 @@ export default function SurveyForm({ onSubmit, surveyorName, surveyorId, isOnlin
+               <CardHeader className="pb-2 sm:pb-3">
+                 <CardTitle className="flex items-center gap-1.5 text-base sm:gap-2 sm:text-lg">
+                   <Building2 className="h-4 w-4 shrink-0 text-emerald-600 sm:h-5 sm:w-5" />
+-                  <span className="leading-tight">Establishment Information<br /><span className="text-sm font-normal text-muted-foreground sm:text-base">Odeeffannoo Qophii</span></span>
++                  <span className="leading-tight">Odeeffannoo Hundeeffama<br /><span className="text-sm font-normal text-muted-foreground sm:text-base">Establishment information</span></span>
+                 </CardTitle>
+                 <CardDescription className="text-xs sm:text-sm">Basic details about the establishment</CardDescription>
+               </CardHeader>
+@@ -247,7 +253,7 @@ export default function SurveyForm({ onSubmit, surveyorName, surveyorId, isOnlin
+                     </Select>
+                   </div>
+                   <div className="space-y-1.5 sm:space-y-2">
+-                    <Label htmlFor="area" className="text-xs sm:text-sm">Area / Kebele<br /><span className="text-xs font-normal text-muted-foreground">Ganda</span> <span className="text-red-500">*</span></Label>
++                    <Label htmlFor="area" className="text-xs sm:text-sm">Werreda <span className="text-red-500">*</span></Label>
+                     <Select value={formData.area} onValueChange={(v) => handleSelectChange('area', v)} disabled={!selectedSubCity}>
+                       <SelectTrigger id="area" className="text-sm sm:text-base"><SelectValue placeholder={selectedSubCity ? 'Select / Filadhu' : 'Select sub-city first'} /></SelectTrigger>
+                       <SelectContent>{areas.map((a) => (<SelectItem key={a} value={a}>{a}</SelectItem>))}</SelectContent>
+@@ -255,7 +261,7 @@ export default function SurveyForm({ onSubmit, surveyorName, surveyorId, isOnlin
+                   </div>
+                 </div>
+                 <div className="space-y-1.5 sm:space-y-2">
+-                  <Label htmlFor="specificAddress" className="text-xs sm:text-sm">Specific Address<br /><span className="text-xs font-normal text-muted-foreground">Teessoo Qaamaa</span> <span className="text-red-500">*</span></Label>
++                  <Label htmlFor="specificAddress" className="text-xs sm:text-sm">Specific Address<br /><span className="text-xs font-normal text-muted-foreground">Baka Addaa</span> <span className="text-red-500">*</span></Label>
+                   <Input id="specificAddress" name="specificAddress" placeholder="Street name, landmark..." value={formData.specificAddress} onChange={handleChange} required className="text-sm sm:text-base" />
+                 </div>
+               </CardContent>
+@@ -268,7 +274,7 @@ export default function SurveyForm({ onSubmit, surveyorName, surveyorId, isOnlin
+               <CardHeader className="pb-2 sm:pb-3">
+                 <CardTitle className="flex items-center gap-1.5 text-base sm:gap-2 sm:text-lg">
+                   <FileText className="h-4 w-4 shrink-0 text-blue-600 sm:h-5 sm:w-5" />
+-                  <span className="leading-tight">Capacity & License<br /><span className="text-sm font-normal text-muted-foreground sm:text-base">Bayyinnafee fi Eyyemma</span></span>
++                  <span className="leading-tight">Dandeettii fi Hayyama<br /><span className="text-sm font-normal text-muted-foreground sm:text-base">Capacity and license</span></span>
+                 </CardTitle>
+                 <CardDescription className="text-xs sm:text-sm">Room capacity and licensing information</CardDescription>
+               </CardHeader>
+@@ -322,7 +328,7 @@ export default function SurveyForm({ onSubmit, surveyorName, surveyorId, isOnlin
+                 </div>
+                 <div className="space-y-1.5 sm:space-y-2">
+                   <Label htmlFor="contactPhone" className="text-xs sm:text-sm">Phone Number<br /><span className="text-xs font-normal text-muted-foreground">Lakkoofsa Bilbila</span> <span className="text-red-500">*</span></Label>
+-                  <Input id="contactPhone" name="contactPhone" type="tel" placeholder="e.g., +251 91 234 5678" value={formData.contactPhone} onChange={handleChange} required className="text-sm sm:text-base" />
++                  <Input id="contactPhone" name="contactPhone" type="tel" placeholder="e.g., +251 91 234 5678" value={formData.contactPhone} onChange={(e) => { const val = e.target.value.replace(/[^0-9+\s-]/g, ''); setFormData(prev => ({ ...prev, contactPhone: val })); }} required className="text-sm sm:text-base" />
+                 </div>
+               </CardContent>
+             </>
+@@ -334,7 +340,7 @@ export default function SurveyForm({ onSubmit, surveyorName, surveyorId, isOnlin
+               <CardHeader className="pb-2 sm:pb-3">
+                 <CardTitle className="flex items-center gap-1.5 text-base sm:gap-2 sm:text-lg">
+                   <Eye className="h-4 w-4 shrink-0 text-blue-600 sm:h-5 sm:w-5" />
+-                  <span className="leading-tight">Review & Confirm<br /><span className="text-sm font-normal text-muted-foreground sm:text-base">Ilaali fi Mirkanaa</span></span>
++                  <span className="leading-tight">Odeeffannoo Quunnamtii<br /><span className="text-sm font-normal text-muted-foreground sm:text-base">Review and confirm</span></span>
+                 </CardTitle>
+                 <CardDescription className="text-xs sm:text-sm">Review all data before submitting / Galii hunda ilaalii booda erguu</CardDescription>
+               </CardHeader>
