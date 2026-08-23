@@ -110,7 +110,7 @@ export default function AdminPanel() {
       setNewUsername('');
       setNewPassword('');
       fetchUsers();
-      toast({ title: 'Data Collector Created', description: `Credentials for ${user.name} are ready to share.` });
+      toast({ title: 'Walitti Qabaa Daataa', description: `Credentials for ${user.name} are ready to share.` });
     } catch (error) {
       toast({
         title: 'Creation Failed',
@@ -172,7 +172,7 @@ export default function AdminPanel() {
         <CardHeader className="pb-3">
           <CardTitle className="flex items-center gap-2 text-lg">
             <UserPlus className="h-5 w-5 text-emerald-600" />
-            Create Data Collector
+            Walitti Qabaa Daataa
           </CardTitle>
           <CardDescription>
             Create accounts and share credentials with your data collectors
@@ -232,7 +232,7 @@ export default function AdminPanel() {
               {creating ? (
                 <><Loader2 className="mr-2 h-4 w-4 animate-spin" /> Creating...</>
               ) : (
-                'Create Data Collector Account'
+                'Walitti Qabaa Daataa'
               )}
             </Button>
           </form>
@@ -267,7 +267,7 @@ export default function AdminPanel() {
         <CardHeader className="pb-3">
           <CardTitle className="flex items-center gap-2 text-lg">
             <Users className="h-5 w-5 text-emerald-600" />
-            All Users
+            Fayyadamtoota Hundaa
             <Badge variant="secondary" className="ml-auto">{users.length}</Badge>
           </CardTitle>
         </CardHeader>
@@ -317,7 +317,7 @@ export default function AdminPanel() {
       <AlertDialog open={!!deleteId} onOpenChange={(open) => !open && setDeleteId(null)}>
         <AlertDialogContent>
           <AlertDialogHeader>
-            <AlertDialogTitle>Delete Data Collector?</AlertDialogTitle>
+            <AlertDialogTitle>Haqa Walitti Qabaa Daataa?</AlertDialogTitle>
             <AlertDialogDescription>
               This will remove the user and they will no longer be able to log in.
             </AlertDialogDescription>

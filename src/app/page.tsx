@@ -44,7 +44,7 @@ export default function Home() {
         { value: 'survey', label: "Qo'annoo", icon: <ClipboardList className="h-4 w-4" /> },
         { value: 'data', label: 'Galmeewwan', icon: <Database className="h-4 w-4" /> },
         { value: 'dashboard', label: 'Istaatiksii', icon: <BarChart3 className="h-4 w-4" /> },
-        { value: 'admin', label: 'Users', icon: <Shield className="h-4 w-4" /> },
+        { value: 'admin', label: 'Fayyadamtoota', icon: <Shield className="h-4 w-4" /> },
       ]
     : [
         { value: 'survey', label: "Qo'annoo", icon: <ClipboardList className="h-4 w-4" /> },
