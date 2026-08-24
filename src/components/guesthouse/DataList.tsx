@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback, useRef } from 'react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -52,6 +52,9 @@ import {
   Pencil,
   Loader2,
   Save,
+  Upload,
+  Plus,
+  X,
 } from 'lucide-react';
 import { locationData, getAllSubCities, getAreasForSubCity, LICENSE_TYPES, LICENSE_LEVELS } from '@/lib/location-data';
 
@@ -116,6 +119,19 @@ export default function DataList({ refreshTrigger }: DataListProps) {
   const [editAreas, setEditAreas] = useState<string[]>([]);
   const [saving, setSaving] = useState(false);
   const [deleting, setDeleting] = useState(false);
+  const [showRegister, setShowRegister] = useState(false);
+  const [showImport, setShowImport] = useState(false);
+  const [registering, setRegistering] = useState(false);
+  const [importing, setImporting] = useState(false);
+  const [importResult, setImportResult] = useState<{success: number, failed: number, errors: string[]} | null>(null);
+  const fileInputRef = useRef<HTMLInputElement>(null);
+  const [regSubCity, setRegSubCity] = useState('');
+  const [regAreas, setRegAreas] = useState<string[]>([]);
+  const [regForm, setRegForm] = useState({
+    organizationName: '', subCity: '', area: '', specificAddress: '',
+    numberOfRooms: '', licenseType: '', licenseLevel: '', licenseNumber: '',
+    ownerName: '', contactName: '', contactPhone: ''
+  });
 
   const fetchData = useCallback(async () => {
     setLoading(true);
@@ -180,6 +196,54 @@ export default function DataList({ refreshTrigger }: DataListProps) {
       setDeleting(false);
       setDeleteId(null);
     }
+  };
+
+  const handleRegister = async () => {
+    if (!regForm.organizationName || !regForm.subCity || !regForm.area || !regForm.specificAddress ||
+        !regForm.numberOfRooms || !regForm.licenseType || !regForm.licenseLevel || !regForm.licenseNumber ||
+        !regForm.ownerName || !regForm.contactName || !regForm.contactPhone) {
+      toast({ title: 'Qabiyyee Hin Jiru / Missing Fields', description: 'All fields are required', variant: 'destructive' });
+      return;
+    }
+    const phoneClean = regForm.contactPhone.replace(/[\s-]/g, '');
+    if (!/^(\+251|251|0)?(9|7)\d{8}$/.test(phoneClean)) {
+      toast({ title: 'Bilbila Dogoggora / Invalid Phone', description: 'Enter valid Ethiopian phone number', variant: 'destructive' });
+      return;
+    }
+    setRegistering(true);
+    try {
+      const res = await fetch('/api/guesthouses', {
+        method: 'POST', headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ ...regForm, serviceRating: 0, surveyorName: 'Admin' }),
+      });
+      if (!res.ok) { const err = await res.json(); throw new Error(err.error); }
+      toast({ title: 'Galmeen Galmeerrame! / Registered!', description: regForm.organizationName });
+      setShowRegister(false);
+      setRegForm({ organizationName: '', subCity: '', area: '', specificAddress: '', numberOfRooms: '', licenseType: '', licenseLevel: '', licenseNumber: '', ownerName: '', contactName: '', contactPhone: '' });
+      setRegSubCity(''); setRegAreas([]);
+      fetchData();
+    } catch (error) {
+      toast({ title: 'Hin Dhufne / Failed', description: error instanceof Error ? error.message : 'Try again', variant: 'destructive' });
+    } finally { setRegistering(false); }
+  };
+
+  const handleImport = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    setImporting(true);
+    setImportResult(null);
+    try {
+      const fd = new FormData();
+      fd.append('file', file);
+      const res = await fetch('/api/guesthouses/import', { method: 'POST', body: fd });
+      const json = await res.json();
+      if (!res.ok) throw new Error(json.error || 'Import failed');
+      setImportResult(json);
+      toast({ title: 'Galmeessaa Keessaa / Import Complete', description: json.message });
+      fetchData();
+    } catch (error) {
+      toast({ title: 'Import Failed', description: error instanceof Error ? error.message : 'Check file format', variant: 'destructive' });
+    } finally { setImporting(false); if (fileInputRef.current) fileInputRef.current.value = ''; }
   };
 
   const openEdit = (item: GuestHouse) => {
@@ -347,6 +411,12 @@ export default function DataList({ refreshTrigger }: DataListProps) {
           </div>
 
           <div className="flex flex-wrap gap-2">
+            <Button size="sm" className="bg-blue-600 hover:bg-blue-700" onClick={() => setShowRegister(true)}>
+              <Plus className="mr-1 h-4 w-4" /> Registarii Haaraa
+            </Button>
+            <Button variant="outline" size="sm" onClick={() => setShowImport(true)}>
+              <Upload className="mr-1 h-4 w-4" /> Import Excel
+            </Button>
             <Button variant="outline" size="sm" onClick={fetchData}>
               <RefreshCw className="mr-1 h-4 w-4" /> Refresh
             </Button>
@@ -693,6 +763,142 @@ export default function DataList({ refreshTrigger }: DataListProps) {
               </DialogFooter>
             </div>
           )}
+        </DialogContent>
+      </Dialog>
+
+      {/* Register New Guesthouse Dialog */}
+      <Dialog open={showRegister} onOpenChange={setShowRegister}>
+        <DialogContent className="max-w-[95vw] sm:max-w-2xl max-h-[90vh] overflow-y-auto">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2">
+              <Plus className="h-5 w-5 text-blue-600" />
+              <span>Registarii Mana Keessummootaa Haaraa</span>
+            </DialogTitle>
+            <DialogDescription>Register New Guesthouse / Walduraa Dabarsisa</DialogDescription>
+          </DialogHeader>
+          <div className="space-y-4 pt-2">
+            {/* Establishment */}
+            <div className="space-y-3 rounded-lg border p-3">
+              <h4 className="text-sm font-semibold text-emerald-700">Odeeffannoo Hundeeffama / Establishment information</h4>
+              <div className="space-y-2">
+                <Label className="text-xs">Organization Name / Maqaa Dhaabbataa <span className="text-red-500">*</span></Label>
+                <Input placeholder="e.g., GOLD MARK HOTEL" value={regForm.organizationName} onChange={(e) => setRegForm({...regForm, organizationName: e.target.value})} />
+              </div>
+              <div className="grid grid-cols-2 gap-3">
+                <div className="space-y-2">
+                  <Label className="text-xs">Sub-City / Kuttaa Maggalaa <span className="text-red-500">*</span></Label>
+                  <Select value={regForm.subCity} onValueChange={(v) => { setRegForm({...regForm, subCity: v, area: ''}); setRegSubCity(v); setRegAreas(getAreasForSubCity(v)); }}>
+                    <SelectTrigger className="text-xs"><SelectValue placeholder="Filadhu / Select" /></SelectTrigger>
+                    <SelectContent>{getAllSubCities().map((sc) => <SelectItem key={sc} value={sc}>{sc}</SelectItem>)}</SelectContent>
+                  </Select>
+                </div>
+                <div className="space-y-2">
+                  <Label className="text-xs">Werreda <span className="text-red-500">*</span></Label>
+                  <Select value={regForm.area} onValueChange={(v) => setRegForm({...regForm, area: v})} disabled={!regForm.subCity}>
+                    <SelectTrigger className="text-xs"><SelectValue /></SelectTrigger>
+                    <SelectContent>{regAreas.map((a) => <SelectItem key={a} value={a}>{a}</SelectItem>)}</SelectContent>
+                  </Select>
+                </div>
+              </div>
+              <div className="space-y-2">
+                <Label className="text-xs">Specific Address / Baka Addaa <span className="text-red-500">*</span></Label>
+                <Input placeholder="Street name, landmark..." value={regForm.specificAddress} onChange={(e) => setRegForm({...regForm, specificAddress: e.target.value})} />
+              </div>
+            </div>
+            {/* License */}
+            <div className="space-y-3 rounded-lg border p-3">
+              <h4 className="text-sm font-semibold text-blue-700">Dandeettii fi Hayyama / Capacity and license</h4>
+              <div className="space-y-2">
+                <Label className="text-xs">Number of Rooms / Lakkoofsa Qubeettii <span className="text-red-500">*</span></Label>
+                <Input type="number" min="1" placeholder="e.g., 20" value={regForm.numberOfRooms} onChange={(e) => setRegForm({...regForm, numberOfRooms: e.target.value})} />
+              </div>
+              <div className="grid grid-cols-2 gap-3">
+                <div className="space-y-2">
+                  <Label className="text-xs">License Type / Goossa Eyyema <span className="text-red-500">*</span></Label>
+                  <Select value={regForm.licenseType} onValueChange={(v) => setRegForm({...regForm, licenseType: v})}>
+                    <SelectTrigger className="text-xs"><SelectValue placeholder="Filadhu" /></SelectTrigger>
+                    <SelectContent>{LICENSE_TYPES.map((t) => <SelectItem key={t} value={t}>{t}</SelectItem>)}</SelectContent>
+                  </Select>
+                </div>
+                <div className="space-y-2">
+                  <Label className="text-xs">License Level / Saddarkaa Eyyema <span className="text-red-500">*</span></Label>
+                  <Select value={regForm.licenseLevel} onValueChange={(v) => setRegForm({...regForm, licenseLevel: v})}>
+                    <SelectTrigger className="text-xs"><SelectValue placeholder="Filadhu" /></SelectTrigger>
+                    <SelectContent>{LICENSE_LEVELS.map((l) => <SelectItem key={l} value={l}>{l}</SelectItem>)}</SelectContent>
+                  </Select>
+                </div>
+              </div>
+              <div className="space-y-2">
+                <Label className="text-xs">License Number / Lakofsaa Eyyema <span className="text-red-500">*</span></Label>
+                <Input placeholder="e.g., GH-2024-001" value={regForm.licenseNumber} onChange={(e) => setRegForm({...regForm, licenseNumber: e.target.value})} />
+              </div>
+            </div>
+            {/* Contact */}
+            <div className="space-y-3 rounded-lg border p-3">
+              <h4 className="text-sm font-semibold text-purple-700">Odeeffannoo Quunnamtii / Contact Information</h4>
+              <div className="space-y-2">
+                <Label className="text-xs">Owner Name / Maqaa Abbaa Qaabeyee <span className="text-red-500">*</span></Label>
+                <Input placeholder="Full name of owner" value={regForm.ownerName} onChange={(e) => setRegForm({...regForm, ownerName: e.target.value})} />
+              </div>
+              <div className="space-y-2">
+                <Label className="text-xs">Contact Person / Nama Adadura Qunnamnu <span className="text-red-500">*</span></Label>
+                <Input placeholder="Manager or reception contact" value={regForm.contactName} onChange={(e) => setRegForm({...regForm, contactName: e.target.value})} />
+              </div>
+              <div className="space-y-2">
+                <Label className="text-xs">Phone Number / Lakkoofsa Bilbila <span className="text-red-500">*</span></Label>
+                <Input type="tel" placeholder="e.g., +251 91 234 5678" value={regForm.contactPhone} onChange={(e) => setRegForm({...regForm, contactPhone: e.target.value.replace(/[^0-9+\s-]/g, '')})} />
+              </div>
+            </div>
+          </div>
+          <DialogFooter className="gap-2 sm:gap-0 mt-4">
+            <Button variant="outline" onClick={() => setShowRegister(false)}>Dhiisi / Cancel</Button>
+            <Button className="bg-blue-600 hover:bg-blue-700" onClick={handleRegister} disabled={registering}>
+              {registering ? <><Loader2 className="mr-1 h-4 w-4 animate-spin" /> Saving...</> : 'Galmeessi / Register'}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* Bulk Import Dialog */}
+      <Dialog open={showImport} onOpenChange={(open) => { setShowImport(open); if (!open) setImportResult(null); }}>
+        <DialogContent className="max-w-[95vw] sm:max-w-lg">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2">
+              <Upload className="h-5 w-5 text-emerald-600" />
+              <span>Galmeessaa Keessaa / Bulk Import</span>
+            </DialogTitle>
+            <DialogDescription>Import guest house data from Excel file</DialogDescription>
+          </DialogHeader>
+          <div className="space-y-4 pt-2">
+            <div className="rounded-lg border border-dashed border-emerald-300 bg-emerald-50/50 p-6 text-center">
+              <Upload className="mx-auto h-10 w-10 text-emerald-400" />
+              <p className="mt-2 text-sm font-medium">Fiilii Excel Dabali / Drop Excel File</p>
+              <p className="mt-1 text-xs text-muted-foreground">.xlsx files only</p>
+              <input ref={fileInputRef} type="file" accept=".xlsx,.xls" className="hidden" onChange={handleImport} />
+              <Button variant="outline" size="sm" className="mt-3" onClick={() => fileInputRef.current?.click()} disabled={importing}>
+                {importing ? <><Loader2 className="mr-1 h-4 w-4 animate-spin" /> Importing...</> : <><Upload className="mr-1 h-4 w-4" /> Select File</>}
+              </Button>
+            </div>
+            <Button variant="outline" size="sm" className="w-full" onClick={() => window.open('/api/guesthouses/import/template', '_blank')}>
+              <Download className="mr-1 h-4 w-4" /> Download Template / Daawwii Mallatteessaa
+            </Button>
+            {importResult && (
+              <div className={`rounded-lg border p-3 ${importResult.failed === 0 ? 'border-emerald-200 bg-emerald-50' : 'border-amber-200 bg-amber-50'}`}>
+                <p className="text-sm font-semibold">
+                  <span className="text-emerald-700">{importResult.success} succeeded</span>
+                  {importResult.failed > 0 && <span className="text-red-600 ml-2">{importResult.failed} failed</span>}
+                </p>
+                {importResult.errors.length > 0 && (
+                  <div className="mt-2 max-h-24 overflow-y-auto">
+                    {importResult.errors.slice(0, 10).map((err, i) => (
+                      <p key={i} className="text-xs text-red-600">{err}</p>
+                    ))}
+                    {importResult.errors.length > 10 && <p className="text-xs text-muted-foreground">...and {importResult.errors.length - 10} more</p>}
+                  </div>
+                )}
+              </div>
+            )}
+          </div>
         </DialogContent>
       </Dialog>
     </div>
