@@ -4,6 +4,7 @@ import "./globals.css";
 import { Toaster } from "@/components/ui/toaster";
 import { AuthWrapper } from "@/components/AuthProvider";
 import ServiceWorkerRegistrar from "@/components/ServiceWorkerRegistrar";
+import InstallPrompt from "@/components/InstallPrompt";
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -20,7 +21,7 @@ export const metadata: Metadata = {
   description: 'Mobile-based data collection system for guest house service survey in Bishoftu City, covering sub-cities Dukam, Chelaleka, and Debaayyuu.',
   icons: {
     icon: '/icon.png',
-    apple: '/icon.png',
+    apple: '/icon-512.png',
   },
   manifest: '/manifest.json',
 };
@@ -47,6 +48,7 @@ export default function RootLayout({
           {children}
           <Toaster />
           <ServiceWorkerRegistrar />
+          <InstallPrompt />
         </AuthWrapper>
       </body>
     </html>
