@@ -79,6 +79,7 @@ interface GuestHouse {
   hasHotWater: boolean;
   additionalServices: string | null;
   surveyorName: string | null;
+  signature: string | null;
   createdAt: string;
   updatedAt: string;
 }
@@ -471,6 +472,7 @@ export default function DataList({ refreshTrigger }: DataListProps) {
                     <th className="px-3 py-3 text-left font-semibold text-muted-foreground whitespace-nowrap">Contact</th>
                     <th className="px-3 py-3 text-left font-semibold text-muted-foreground whitespace-nowrap">Phone</th>
                     <th className="px-3 py-3 text-left font-semibold text-muted-foreground whitespace-nowrap">Surveyor</th>
+                    <th className="px-3 py-3 text-center font-semibold text-muted-foreground whitespace-nowrap">Sign</th>
                     <th className="px-3 py-3 text-left font-semibold text-muted-foreground whitespace-nowrap">Date</th>
                     <th className="px-3 py-3 text-center font-semibold text-muted-foreground whitespace-nowrap">Actions</th>
                   </tr>
@@ -499,6 +501,13 @@ export default function DataList({ refreshTrigger }: DataListProps) {
                         <a href={`tel:${item.contactPhone || ''}`} className="text-emerald-600 hover:underline text-xs">{item.contactPhone || '-'}</a>
                       </td>
                       <td className="px-3 py-2.5 max-w-[100px] truncate text-xs text-muted-foreground" title={item.surveyorName || undefined}>{item.surveyorName || '-'}</td>
+                      <td className="px-3 py-2.5 text-center">
+                        {item.signature ? (
+                          <img src={item.signature} alt="Signed" className="h-5 w-auto mx-auto rounded" />
+                        ) : (
+                          <span className="text-xs text-muted-foreground">-</span>
+                        )}
+                      </td>
                       <td className="px-3 py-2.5 whitespace-nowrap text-xs text-muted-foreground">{new Date(item.createdAt).toLocaleDateString('en-GB')}</td>
                       <td className="px-3 py-2.5">
                         <div className="flex items-center justify-center gap-0.5">
@@ -643,6 +652,16 @@ export default function DataList({ refreshTrigger }: DataListProps) {
                       <span className="text-muted-foreground">Phone / Bilbila</span>
                       <span className="font-medium"><a href={`tel:${viewItem.contactPhone || ''}`} className="text-emerald-600 hover:underline">{viewItem.contactPhone || '-'}</a></span>
                     </div>
+                  </div>
+                </div>
+                <div className="space-y-2">
+                  <h4 className="text-sm font-semibold">Signature / Mallattoo</h4>
+                  <div className="rounded-lg border p-3">
+                    {viewItem.signature ? (
+                      <img src={viewItem.signature} alt="Signature" className="max-h-[100px] w-auto bg-white rounded" />
+                    ) : (
+                      <p className="text-xs text-muted-foreground italic">No signature provided / Mallattoo hin jiru</p>
+                    )}
                   </div>
                 </div>
                 {viewItem.surveyorName && (
