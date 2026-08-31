@@ -46,9 +46,13 @@ async function ensureTables(prisma: PrismaClient) {
       "additionalServices" TEXT,
       "surveyorName" TEXT,
       "surveyorId" TEXT,
+      "signature" TEXT,
       "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
       "updatedAt" TIMESTAMP(3) NOT NULL
     );
+  `);
+  await prisma.$executeRawUnsafe(`
+    ALTER TABLE "GuestHouse" ADD COLUMN IF NOT EXISTS "signature" TEXT;
   `);
 }
 

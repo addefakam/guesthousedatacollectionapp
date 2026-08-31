@@ -24,6 +24,7 @@ export async function POST(request: NextRequest) {
       additionalServices,
       surveyorName,
       surveyorId,
+      signature,
     } = body;
 
     // Validate required fields from the 4-step form
@@ -66,6 +67,7 @@ export async function POST(request: NextRequest) {
         additionalServices: additionalServices || null,
         surveyorName: surveyorName || null,
         surveyorId: surveyorId || null,
+        signature: signature || null,
       },
     });
 

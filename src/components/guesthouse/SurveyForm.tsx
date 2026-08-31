@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useRef } from 'react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -32,6 +32,7 @@ import {
   Eye,
 } from 'lucide-react';
 import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
+import SignaturePad, { SignaturePadHandle } from '@/components/SignaturePad';
 import {
   locationData,
   getAreasForSubCity,
@@ -61,6 +62,7 @@ export default function SurveyForm({ onSubmit, surveyorName, surveyorId, isOnlin
   const [selectedSubCity, setSelectedSubCity] = useState('');
   const [areas, setAreas] = useState<string[]>([]);
   const [dataConfirmed, setDataConfirmed] = useState('');
+  const signaturePadRef = useRef<SignaturePadHandle>(null);
 
   const emptyForm = {
     guestHouseName: '',
@@ -125,6 +127,10 @@ export default function SurveyForm({ onSubmit, surveyorName, surveyorId, isOnlin
           toast({ title: 'Confirmation Required / Mirkanaa\'uu Barbaachisaa', description: 'Please confirm data is true and authenticated / Daataan dhugaa fi mirkanaa\'eef mirkanaadhu', variant: 'destructive' });
           return false;
         }
+        if (signaturePadRef.current?.isEmpty()) {
+          toast({ title: 'Signature Required / Mallattoo Barbaachisaa', description: 'Please provide your signature / Mallattoo keessan galmeessaa', variant: 'destructive' });
+          return false;
+        }
         return true;
       default:
         return true;
@@ -140,13 +146,14 @@ export default function SurveyForm({ onSubmit, surveyorName, surveyorId, isOnlin
     setAreas([]);
     setDataConfirmed('');
     setCurrentStep(1);
+    signaturePadRef.current?.clear();
   };
-
-  const payload = { ...formData, serviceRating: 0, surveyorName, surveyorId };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!validateStep(currentStep)) return;
+    const signatureData = signaturePadRef.current?.getSignature() || null;
+    const payload = { ...formData, serviceRating: 0, surveyorName, surveyorId, signature: signatureData };
     setIsSubmitting(true);
     if (isOnline) {
       try {
@@ -371,6 +378,13 @@ export default function SurveyForm({ onSubmit, surveyorName, surveyorId, isOnlin
                       </Label>
                     </div>
                   </RadioGroup>
+                </div>
+                <div className="mt-3">
+                  <SignaturePad
+                    ref={signaturePadRef}
+                    label="Signature / Mallattoo"
+                    labelOr="Mallattoo Galmeessitichaa"
+                  />
                 </div>
               </CardContent>
             </>
