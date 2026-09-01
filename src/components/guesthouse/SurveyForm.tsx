@@ -76,6 +76,8 @@ export default function SurveyForm({ onSubmit, surveyorName, surveyorId, isOnlin
     licenseNumber: '',
     contactPhone: '',
     contactName: '',
+    contactPhone2: '',
+    contactName2: '',
     ownerName: '',
   };
 
@@ -119,6 +121,17 @@ export default function SurveyForm({ onSubmit, surveyorName, surveyorId, isOnlin
         const ethPhoneRegex = /^(\+251|251|0)?(9|7)\d{8}$/;
         if (!ethPhoneRegex.test(phoneClean)) {
           toast({ title: 'Invalid Phone / Bilbila Dogoggora', description: 'Enter valid Ethiopian number (e.g., +251 91 234 5678)', variant: 'destructive' });
+          return false;
+        }
+        if (formData.contactPhone2) {
+          const phoneClean2 = formData.contactPhone2.replace(/[\s-]/g, '');
+          if (!ethPhoneRegex.test(phoneClean2)) {
+            toast({ title: 'Invalid Phone 2 / Bilbila 2 Dogoggora', description: 'Enter valid Ethiopian number for second contact', variant: 'destructive' });
+            return false;
+          }
+        }
+        if (formData.contactPhone2 && !formData.contactName2) {
+          toast({ title: 'Name Required / Maqaa Barbaachisaa', description: 'Second contact person name is required when phone is provided / Bilbila 2 qofatu yoo galmeessame maqaan isaa barbaachisaa', variant: 'destructive' });
           return false;
         }
         return true;
@@ -189,8 +202,8 @@ export default function SurveyForm({ onSubmit, surveyorName, surveyorId, isOnlin
     { label: 'License Level / Saddarkaa Eyyema', value: formData.licenseLevel },
     { label: 'License No. / Lakofsaa Eyyema', value: formData.licenseNumber },
     { label: 'Owner / Abbaa Qaabeyee', value: formData.ownerName },
-    { label: 'Contact / Nama Adadura Qunnamnu', value: formData.contactName },
-    { label: 'Phone / Bilbila', value: formData.contactPhone },
+    { label: 'Contact 1 / Quunnamtaa 1', value: `${formData.contactName} — ${formData.contactPhone}` },
+    { label: 'Contact 2 / Quunnamtaa 2', value: formData.contactName2 ? `${formData.contactName2} — ${formData.contactPhone2}` : '' },
   ];
 
   return (
@@ -329,13 +342,27 @@ export default function SurveyForm({ onSubmit, surveyorName, surveyorId, isOnlin
                   <Label htmlFor="ownerName" className="text-xs sm:text-sm">Owner Name<br /><span className="text-xs font-normal text-muted-foreground">Maqaa Abbaa Qaabeyee</span> <span className="text-red-500">*</span></Label>
                   <Input id="ownerName" name="ownerName" placeholder="Full name of owner" value={formData.ownerName} onChange={handleChange} required className="text-sm sm:text-base" />
                 </div>
-                <div className="space-y-1.5 sm:space-y-2">
-                  <Label htmlFor="contactName" className="text-xs sm:text-sm">Contact Person<br /><span className="text-xs font-normal text-muted-foreground">Nama Adadura Qunnamnu</span> <span className="text-red-500">*</span></Label>
-                  <Input id="contactName" name="contactName" placeholder="Manager or reception contact" value={formData.contactName} onChange={handleChange} required className="text-sm sm:text-base" />
+                <div className="rounded-lg border border-purple-200 bg-purple-50/50 p-3 space-y-3">
+                  <p className="text-[10px] font-bold text-purple-700 uppercase tracking-wider">Quunnamtaa 1 / Contact 1</p>
+                  <div className="space-y-1.5 sm:space-y-2">
+                    <Label htmlFor="contactName" className="text-xs sm:text-sm">Contact Person<br /><span className="text-xs font-normal text-muted-foreground">Nama Adadura Qunnamnu</span> <span className="text-red-500">*</span></Label>
+                    <Input id="contactName" name="contactName" placeholder="Manager or reception contact" value={formData.contactName} onChange={handleChange} required className="text-sm sm:text-base" />
+                  </div>
+                  <div className="space-y-1.5 sm:space-y-2">
+                    <Label htmlFor="contactPhone" className="text-xs sm:text-sm">Phone Number<br /><span className="text-xs font-normal text-muted-foreground">Lakkoofsa Bilbila</span> <span className="text-red-500">*</span></Label>
+                    <Input id="contactPhone" name="contactPhone" type="tel" placeholder="e.g., +251 91 234 5678" value={formData.contactPhone} onChange={(e) => { const val = e.target.value.replace(/[^0-9+\s-]/g, ''); setFormData(prev => ({ ...prev, contactPhone: val })); }} required className="text-sm sm:text-base" />
+                  </div>
                 </div>
-                <div className="space-y-1.5 sm:space-y-2">
-                  <Label htmlFor="contactPhone" className="text-xs sm:text-sm">Phone Number<br /><span className="text-xs font-normal text-muted-foreground">Lakkoofsa Bilbila</span> <span className="text-red-500">*</span></Label>
-                  <Input id="contactPhone" name="contactPhone" type="tel" placeholder="e.g., +251 91 234 5678" value={formData.contactPhone} onChange={(e) => { const val = e.target.value.replace(/[^0-9+\s-]/g, ''); setFormData(prev => ({ ...prev, contactPhone: val })); }} required className="text-sm sm:text-base" />
+                <div className="rounded-lg border border-dashed border-gray-300 p-3 space-y-3">
+                  <p className="text-[10px] font-bold text-gray-500 uppercase tracking-wider">Quunnamtaa 2 / Contact 2 <span className="normal-case font-normal">(optional)</span></p>
+                  <div className="space-y-1.5 sm:space-y-2">
+                    <Label htmlFor="contactName2" className="text-xs sm:text-sm">Contact Person<br /><span className="text-xs font-normal text-muted-foreground">Nama Adadura Qunnamnu 2</span></Label>
+                    <Input id="contactName2" name="contactName2" placeholder="Second contact person" value={formData.contactName2} onChange={handleChange} className="text-sm sm:text-base" />
+                  </div>
+                  <div className="space-y-1.5 sm:space-y-2">
+                    <Label htmlFor="contactPhone2" className="text-xs sm:text-sm">Phone Number<br /><span className="text-xs font-normal text-muted-foreground">Lakkoofsa Bilbila 2</span></Label>
+                    <Input id="contactPhone2" name="contactPhone2" type="tel" placeholder="e.g., +251 92 345 6789" value={formData.contactPhone2} onChange={(e) => { const val = e.target.value.replace(/[^0-9+\s-]/g, ''); setFormData(prev => ({ ...prev, contactPhone2: val })); }} className="text-sm sm:text-base" />
+                  </div>
                 </div>
               </CardContent>
             </>

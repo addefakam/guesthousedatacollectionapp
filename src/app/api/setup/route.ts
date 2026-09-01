@@ -38,6 +38,8 @@ async function ensureTables(prisma: PrismaClient) {
       "serviceRating" INTEGER NOT NULL,
       "contactPhone" TEXT,
       "contactName" TEXT,
+      "contactPhone2" TEXT,
+      "contactName2" TEXT,
       "ownerName" TEXT,
       "hasRestaurant" BOOLEAN NOT NULL DEFAULT false,
       "hasParking" BOOLEAN NOT NULL DEFAULT false,
@@ -53,6 +55,12 @@ async function ensureTables(prisma: PrismaClient) {
   `);
   await prisma.$executeRawUnsafe(`
     ALTER TABLE "GuestHouse" ADD COLUMN IF NOT EXISTS "signature" TEXT;
+  `);
+  await prisma.$executeRawUnsafe(`
+    ALTER TABLE "GuestHouse" ADD COLUMN IF NOT EXISTS "contactPhone2" TEXT;
+  `);
+  await prisma.$executeRawUnsafe(`
+    ALTER TABLE "GuestHouse" ADD COLUMN IF NOT EXISTS "contactName2" TEXT;
   `);
 }
 

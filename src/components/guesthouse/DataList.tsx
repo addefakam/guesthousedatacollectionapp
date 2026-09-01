@@ -72,6 +72,8 @@ interface GuestHouse {
   serviceRating: number;
   contactPhone: string | null;
   contactName: string | null;
+  contactPhone2: string | null;
+  contactName2: string | null;
   ownerName: string | null;
   hasRestaurant: boolean;
   hasParking: boolean;
@@ -680,13 +682,25 @@ export default function DataList({ refreshTrigger }: DataListProps) {
                       <span className="text-sm font-semibold">{viewItem.ownerName || '-'}</span>
                     </div>
                     <div className="flex items-center justify-between px-3 py-2.5">
-                      <span className="text-xs text-muted-foreground">Nama Quunnamnu / Contact</span>
+                      <span className="text-xs text-muted-foreground">Quunnamtaa 1 / Contact 1</span>
                       <span className="text-sm font-semibold">{viewItem.contactName || '-'}</span>
                     </div>
                     <div className="flex items-center justify-between px-3 py-2.5">
-                      <span className="text-xs text-muted-foreground">Bilbila / Phone</span>
+                      <span className="text-xs text-muted-foreground">Bilbila 1 / Phone 1</span>
                       <a href={`tel:${viewItem.contactPhone || ''}`} className="text-sm font-semibold text-emerald-600 hover:underline">{viewItem.contactPhone || '-'}</a>
                     </div>
+                    {viewItem.contactName2 && (
+                      <div className="flex items-center justify-between px-3 py-2.5 bg-muted/30">
+                        <span className="text-xs text-muted-foreground">Quunnamtaa 2 / Contact 2</span>
+                        <span className="text-sm font-semibold">{viewItem.contactName2}</span>
+                      </div>
+                    )}
+                    {viewItem.contactPhone2 && (
+                      <div className="flex items-center justify-between px-3 py-2.5 bg-muted/30">
+                        <span className="text-xs text-muted-foreground">Bilbila 2 / Phone 2</span>
+                        <a href={`tel:${viewItem.contactPhone2}`} className="text-sm font-semibold text-emerald-600 hover:underline">{viewItem.contactPhone2}</a>
+                      </div>
+                    )}
                   </div>
                 </div>
 

@@ -16,6 +16,8 @@ export async function POST(request: NextRequest) {
       serviceRating,
       contactPhone,
       contactName,
+      contactPhone2,
+      contactName2,
       ownerName,
       hasRestaurant,
       hasParking,
@@ -59,6 +61,8 @@ export async function POST(request: NextRequest) {
         serviceRating: Number(serviceRating) || 0,
         contactPhone: contactPhone || null,
         contactName: contactName || null,
+        contactPhone2: contactPhone2 || null,
+        contactName2: contactName2 || null,
         ownerName: ownerName || null,
         hasRestaurant: Boolean(hasRestaurant),
         hasParking: Boolean(hasParking),
@@ -105,6 +109,7 @@ export async function GET(request: NextRequest) {
         { specificAddress: { contains: search } },
         { ownerName: { contains: search } },
         { contactName: { contains: search } },
+        { contactName2: { contains: search } },
       ];
     }
 

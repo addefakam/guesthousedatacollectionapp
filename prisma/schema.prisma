@@ -34,6 +34,8 @@ model GuestHouse {
   serviceRating    Int
   contactPhone     String?
   contactName      String?
+  contactPhone2    String?
+  contactName2     String?
   ownerName        String?
   hasRestaurant    Boolean  @default(false)
   hasParking       Boolean  @default(false)
