@@ -531,12 +531,14 @@ export default function DataList({ refreshTrigger }: DataListProps) {
             {/* Mobile Cards */}
             <div className="md:hidden divide-y">
               {data.map((item, idx) => (
-                <div key={item.id} className="p-3 space-y-2">
+                <div key={item.id} className="p-3 space-y-2.5">
                   <div className="flex items-start justify-between gap-2">
                     <div className="min-w-0 flex-1">
-                      <p className="text-xs text-muted-foreground">#{(page - 1) * 50 + idx + 1}</p>
-                      <p className="font-semibold text-sm truncate">{item.organizationName || item.guestHouseName}</p>
-                      <p className="text-xs text-muted-foreground">{item.area}, {item.subCity}</p>
+                      <div className="flex items-center gap-1.5">
+                        <span className="inline-flex h-5 min-w-[20px] items-center justify-center rounded-md bg-emerald-100 text-emerald-700 text-[10px] font-bold px-1">{(page - 1) * 50 + idx + 1}</span>
+                        <p className="font-semibold text-sm truncate">{item.organizationName || item.guestHouseName}</p>
+                      </div>
+                      <p className="text-[11px] text-muted-foreground mt-0.5">{item.area} &middot; {item.subCity}</p>
                     </div>
                     <div className="flex gap-0.5 shrink-0">
                       <Button variant="ghost" size="icon" className="h-7 w-7" onClick={() => openEdit(item)}>
@@ -550,16 +552,29 @@ export default function DataList({ refreshTrigger }: DataListProps) {
                       </Button>
                     </div>
                   </div>
-                  <div className="grid grid-cols-2 gap-x-4 gap-y-1 text-xs">
-                    <div><span className="text-muted-foreground">Rooms:</span> <span className="font-medium">{item.numberOfRooms}</span></div>
-                    <div><span className="text-muted-foreground">License:</span> <span className="font-medium">{item.licenseType}</span></div>
-                    <div><span className="text-muted-foreground">Level:</span> <span className="font-medium">{item.licenseLevel}</span></div>
-                    <div><span className="text-muted-foreground">Owner:</span> <span className="font-medium truncate">{item.ownerName || '-'}</span></div>
-                    <div><span className="text-muted-foreground">Contact:</span> <span className="font-medium truncate">{item.contactName || '-'}</span></div>
-                    <div><span className="text-muted-foreground">Phone:</span> <a href={`tel:${item.contactPhone || ''}`} className="font-medium text-emerald-600">{item.contactPhone || '-'}</a></div>
+                  <div className="grid grid-cols-3 gap-2">
+                    <div className="rounded-lg bg-emerald-50 px-2 py-1.5 text-center">
+                      <p className="text-[9px] text-emerald-600">Qubeettii</p>
+                      <p className="text-sm font-bold text-emerald-700">{item.numberOfRooms}</p>
+                    </div>
+                    <div className="rounded-lg bg-blue-50 px-2 py-1.5 text-center">
+                      <p className="text-[9px] text-blue-600">Eyyema</p>
+                      <p className="text-[11px] font-semibold text-blue-700 leading-tight mt-0.5">{item.licenseType}</p>
+                    </div>
+                    <div className="rounded-lg bg-purple-50 px-2 py-1.5 text-center">
+                      <p className="text-[9px] text-purple-600">Saddarkaa</p>
+                      <p className="text-[11px] font-semibold text-purple-700 leading-tight mt-0.5">{item.licenseLevel}</p>
+                    </div>
                   </div>
-                  <p className="text-[10px] text-muted-foreground text-right">
-                    {item.surveyorName && <span>{item.surveyorName} - </span>}
+                  <div className="flex items-center justify-between text-xs">
+                    <span className="text-muted-foreground truncate">{item.ownerName || '-'}</span>
+                    <a href={`tel:${item.contactPhone || ''}`} className="text-xs font-medium text-emerald-600 shrink-0 ml-2">{item.contactPhone || '-'}</a>
+                  </div>
+                  {item.signature && (
+                    <img src={item.signature} alt="Signed" className="h-4 w-auto opacity-60" />
+                  )}
+                  <p className="text-[10px] text-muted-foreground/60 text-right">
+                    {item.surveyorName && <span>{item.surveyorName} &middot; </span>}
                     {new Date(item.createdAt).toLocaleDateString('en-GB')}
                   </p>
                 </div>
@@ -602,72 +617,101 @@ export default function DataList({ refreshTrigger }: DataListProps) {
 
       {/* View Detail Dialog */}
       <Dialog open={!!viewItem} onOpenChange={(open) => !open && setViewItem(null)}>
-        <DialogContent className="max-h-[85vh] overflow-y-auto sm:max-w-lg">
+        <DialogContent className="max-h-[85vh] overflow-y-auto sm:max-w-lg p-0 gap-0">
           {viewItem && (
             <>
-              <DialogHeader>
-                <DialogTitle className="text-xl">{viewItem.organizationName || viewItem.guestHouseName}</DialogTitle>
-                <DialogDescription>{viewItem.area}, {viewItem.subCity}</DialogDescription>
-              </DialogHeader>
-              <div className="space-y-4 pt-2">
-                <div className="grid grid-cols-2 gap-3">
-                  <div className="rounded-lg bg-muted/50 p-3">
-                    <p className="text-xs text-muted-foreground">Rooms / Qubeettii</p>
-                    <p className="text-lg font-semibold text-emerald-600">{viewItem.numberOfRooms}</p>
+              {/* Header with gradient */}
+              <div className="bg-gradient-to-br from-emerald-600 to-emerald-700 px-5 pt-6 pb-5 rounded-t-lg">
+                <DialogHeader>
+                  <DialogTitle className="text-lg font-bold text-white leading-tight">{viewItem.organizationName || viewItem.guestHouseName}</DialogTitle>
+                  <DialogDescription className="text-emerald-100 text-xs mt-1 flex items-center gap-1.5">
+                    <Building2 className="h-3 w-3" />
+                    {viewItem.area} &middot; {viewItem.subCity}
+                  </DialogDescription>
+                </DialogHeader>
+              </div>
+
+              <div className="px-5 py-4 space-y-4">
+                {/* Stat Cards */}
+                <div className="grid grid-cols-3 gap-2.5">
+                  <div className="rounded-xl bg-emerald-50 border border-emerald-100 p-2.5 text-center">
+                    <p className="text-[10px] text-emerald-600 font-medium">Qubeettii / Rooms</p>
+                    <p className="text-xl font-bold text-emerald-700 mt-0.5">{viewItem.numberOfRooms}</p>
                   </div>
-                  <div className="rounded-lg bg-muted/50 p-3">
-                    <p className="text-xs text-muted-foreground">License No. / Lakofsaa Eyyema</p>
-                    <p className="text-lg font-semibold text-emerald-600">{viewItem.licenseNumber || '-'}</p>
+                  <div className="rounded-xl bg-blue-50 border border-blue-100 p-2.5 text-center">
+                    <p className="text-[10px] text-blue-600 font-medium">Eyyema / License</p>
+                    <p className="text-xs font-bold text-blue-700 mt-1 leading-tight">{viewItem.licenseType}</p>
                   </div>
-                </div>
-                <div className="space-y-2">
-                  <h4 className="text-sm font-semibold">License Details / Odeeffannoo Eyyemaa</h4>
-                  <div className="rounded-lg border p-3 space-y-1.5">
-                    <div className="flex justify-between text-sm">
-                      <span className="text-muted-foreground">Type / Goossa Eyyema</span>
-                      <span className="font-medium">{viewItem.licenseType}</span>
-                    </div>
-                    <div className="flex justify-between text-sm">
-                      <span className="text-muted-foreground">Level / Saddarkaa Eyyema</span>
-                      <span className="font-medium">{viewItem.licenseLevel}</span>
-                    </div>
-                  </div>
-                </div>
-                <div className="space-y-2">
-                  <h4 className="text-sm font-semibold">Address / Baka Addaa</h4>
-                  <p className="text-sm text-muted-foreground rounded-lg border p-3">{viewItem.specificAddress}</p>
-                </div>
-                <div className="space-y-2">
-                  <h4 className="text-sm font-semibold">Contact Details / Odeeffannoo Quunnamtii</h4>
-                  <div className="rounded-lg border p-3 space-y-1.5">
-                    <div className="flex justify-between text-sm">
-                      <span className="text-muted-foreground">Owner / Abbaa Qaabeyee</span>
-                      <span className="font-medium">{viewItem.ownerName || '-'}</span>
-                    </div>
-                    <div className="flex justify-between text-sm">
-                      <span className="text-muted-foreground">Contact / Nama Adadura Qunnamnu</span>
-                      <span className="font-medium">{viewItem.contactName || '-'}</span>
-                    </div>
-                    <div className="flex justify-between text-sm">
-                      <span className="text-muted-foreground">Phone / Bilbila</span>
-                      <span className="font-medium"><a href={`tel:${viewItem.contactPhone || ''}`} className="text-emerald-600 hover:underline">{viewItem.contactPhone || '-'}</a></span>
-                    </div>
+                  <div className="rounded-xl bg-purple-50 border border-purple-100 p-2.5 text-center">
+                    <p className="text-[10px] text-purple-600 font-medium">Saddarkaa / Level</p>
+                    <p className="text-xs font-bold text-purple-700 mt-1 leading-tight">{viewItem.licenseLevel}</p>
                   </div>
                 </div>
-                <div className="space-y-2">
-                  <h4 className="text-sm font-semibold">Signature / Mallattoo</h4>
-                  <div className="rounded-lg border p-3">
+
+                {/* License Number */}
+                <div className="flex items-center gap-2.5 rounded-lg bg-muted/40 border p-3">
+                  <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-amber-100 text-amber-600">
+                    <FileSpreadsheet className="h-4 w-4" />
+                  </div>
+                  <div>
+                    <p className="text-[10px] text-muted-foreground font-medium">Lakofsaa Eyyema / License No.</p>
+                    <p className="text-sm font-semibold font-mono">{viewItem.licenseNumber || '-'}</p>
+                  </div>
+                </div>
+
+                {/* Address */}
+                <div>
+                  <div className="flex items-center gap-1.5 mb-1.5">
+                    <div className="h-1 w-1 rounded-full bg-emerald-500" />
+                    <h4 className="text-xs font-bold text-emerald-700 uppercase tracking-wide">Baka Addaa / Address</h4>
+                  </div>
+                  <p className="text-sm text-foreground/80 rounded-lg bg-muted/30 border border-dashed p-3 leading-relaxed">{viewItem.specificAddress}</p>
+                </div>
+
+                {/* Contact */}
+                <div>
+                  <div className="flex items-center gap-1.5 mb-1.5">
+                    <div className="h-1 w-1 rounded-full bg-blue-500" />
+                    <h4 className="text-xs font-bold text-blue-700 uppercase tracking-wide">Odeeffannoo Quunnamtii / Contact</h4>
+                  </div>
+                  <div className="rounded-lg border space-y-0 divide-y">
+                    <div className="flex items-center justify-between px-3 py-2.5">
+                      <span className="text-xs text-muted-foreground">Abbaa Qaabeyee / Owner</span>
+                      <span className="text-sm font-semibold">{viewItem.ownerName || '-'}</span>
+                    </div>
+                    <div className="flex items-center justify-between px-3 py-2.5">
+                      <span className="text-xs text-muted-foreground">Nama Quunnamnu / Contact</span>
+                      <span className="text-sm font-semibold">{viewItem.contactName || '-'}</span>
+                    </div>
+                    <div className="flex items-center justify-between px-3 py-2.5">
+                      <span className="text-xs text-muted-foreground">Bilbila / Phone</span>
+                      <a href={`tel:${viewItem.contactPhone || ''}`} className="text-sm font-semibold text-emerald-600 hover:underline">{viewItem.contactPhone || '-'}</a>
+                    </div>
+                  </div>
+                </div>
+
+                {/* Signature */}
+                <div>
+                  <div className="flex items-center gap-1.5 mb-1.5">
+                    <div className="h-1 w-1 rounded-full bg-purple-500" />
+                    <h4 className="text-xs font-bold text-purple-700 uppercase tracking-wide">Mallattoo / Signature</h4>
+                  </div>
+                  <div className="rounded-lg border-2 border-dashed border-gray-200 bg-gradient-to-br from-white to-gray-50 p-3">
                     {viewItem.signature ? (
-                      <img src={viewItem.signature} alt="Signature" className="max-h-[100px] w-auto bg-white rounded" />
+                      <img src={viewItem.signature} alt="Signature" className="max-h-[120px] w-auto mx-auto rounded" />
                     ) : (
-                      <p className="text-xs text-muted-foreground italic">No signature provided / Mallattoo hin jiru</p>
+                      <p className="text-xs text-muted-foreground/60 italic text-center py-4">Mallattoo hin jiru / No signature</p>
                     )}
                   </div>
                 </div>
+
+                {/* Footer / Surveyor */}
                 {viewItem.surveyorName && (
-                  <p className="text-xs text-muted-foreground">
-                    Surveyed by: {viewItem.surveyorName} on {new Date(viewItem.createdAt).toLocaleDateString('en-GB')}
-                  </p>
+                  <div className="flex items-center justify-between rounded-lg bg-muted/50 px-3 py-2.5">
+                    <span className="text-[10px] text-muted-foreground">Sakatta'aa / Surveyor</span>
+                    <span className="text-xs font-medium">{viewItem.surveyorName}</span>
+                    <span className="text-[10px] text-muted-foreground">{new Date(viewItem.createdAt).toLocaleDateString('en-GB')}</span>
+                  </div>
                 )}
               </div>
             </>
