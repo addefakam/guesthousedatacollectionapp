@@ -23,3 +23,28 @@ Stage Summary:
 - Data persisted in SQLite via Prisma ORM
 - CSV export functionality implemented
 - Mobile-responsive design verified on iPhone 14 viewport
+
+---
+Task ID: 2
+Agent: Main Agent
+Task: Show beds count alongside guest house count per woreda in statistics dashboard
+
+Work Log:
+- Updated /api/guesthouses/stats API to include bed counts per woreda (woredaBedStats groupBy query with _sum: numberOfRooms)
+- Added subCityBeds field to API response mapping total beds per sub-city
+- Merged bed counts into woredaBySubCity data structure
+- Updated Dashboard component Stats interface to include subCityBeds and beds per woreda
+- Added dual display in sub-city header: emerald badge for GH count + sky badge for beds count
+- Added dual progress bars per sub-city: emerald for GH, sky for Beds with labels
+- Added color legend (emerald = Guest Houses, sky = Beds) in expanded woreda breakdown
+- Each woreda row now shows two badges: emerald (GH count) + sky (beds count)
+- Each woreda has dual progress bars: emerald for GH, sky for beds
+- Switched Prisma provider from PostgreSQL to SQLite to match existing database
+- Verified API returns correct data: subCityBeds, per-woreda beds field all populated
+- Build successful with no errors
+
+Stage Summary:
+- Dashboard statistics now display both guest house count (emerald/green) and beds count (sky/blue) for each woreda and sub-city
+- Different colors clearly distinguish GH count from beds count at all levels
+- Color legend included in expanded woreda breakdown section
+- API enhanced with additional groupBy query for per-woreda bed aggregation

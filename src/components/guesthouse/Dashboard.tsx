@@ -33,7 +33,8 @@ interface LicenseStat {
 interface Stats {
   total: number;
   subCityStats: SubCityStat[];
-  woredaBySubCity: Record<string, { area: string; count: number }[]>;
+  subCityBeds: Record<string, number>;
+  woredaBySubCity: Record<string, { area: string; count: number; beds: number }[]>;
   licenseStats: LicenseStat[];
   totalRooms: number;
   avgRating: number;
@@ -118,6 +119,11 @@ export default function Dashboard() {
 
   const maxSubCityCount = Math.max(
     ...stats.subCityStats.map((s) => s._count),
+    1
+  );
+
+  const maxSubCityBeds = Math.max(
+    ...Object.values(stats.subCityBeds),
     1
   );
 
@@ -226,6 +232,7 @@ export default function Dashboard() {
             const isExpanded = expandedSubCities.has(sc.subCity);
             const woredas = stats.woredaBySubCity[sc.subCity] || [];
             const maxWoredaCount = Math.max(...woredas.map((w) => w.count), 1);
+            const maxWoredaBeds = Math.max(...woredas.map((w) => w.beds), 1);
 
             return (
               <div key={sc.subCity} className="rounded-lg border bg-white">
@@ -248,35 +255,78 @@ export default function Dashboard() {
                         <span className="inline-flex items-center justify-center h-5 min-w-[20px] rounded-full bg-emerald-100 text-emerald-700 text-[11px] font-bold px-1.5">
                           {sc._count}
                         </span>
+                        <span className="inline-flex items-center justify-center h-5 min-w-[20px] rounded-full bg-sky-100 text-sky-700 text-[11px] font-bold px-1.5">
+                          {(stats.subCityBeds[sc.subCity] || 0).toLocaleString()}
+                        </span>
                       </div>
                     </div>
-                    <div className="mt-1 h-2 overflow-hidden rounded-full bg-muted">
-                      <div
-                        className="h-full rounded-full bg-emerald-500 transition-all"
-                        style={{ width: `${(sc._count / maxSubCityCount) * 100}%` }}
-                      />
+                    <div className="mt-1 space-y-0.5">
+                      <div className="flex items-center gap-1">
+                        <span className="text-[9px] text-emerald-600 w-8 shrink-0">GH</span>
+                        <div className="flex-1 h-1.5 overflow-hidden rounded-full bg-muted">
+                          <div
+                            className="h-full rounded-full bg-emerald-500 transition-all"
+                            style={{ width: `${(sc._count / maxSubCityCount) * 100}%` }}
+                          />
+                        </div>
+                      </div>
+                      <div className="flex items-center gap-1">
+                        <span className="text-[9px] text-sky-600 w-8 shrink-0">Beds</span>
+                        <div className="flex-1 h-1.5 overflow-hidden rounded-full bg-muted">
+                          <div
+                            className="h-full rounded-full bg-sky-500 transition-all"
+                            style={{ width: `${((stats.subCityBeds[sc.subCity] || 0) / maxSubCityBeds) * 100}%` }}
+                          />
+                        </div>
+                      </div>
                     </div>
                   </div>
                 </button>
 
                 {/* Woreda breakdown - expandable */}
                 {isExpanded && woredas.length > 0 && (
-                  <div className="px-3 pb-2.5 pt-0.5 space-y-1.5 border-t ml-6">
+                  <div className="px-3 pb-2.5 pt-0.5 space-y-2 border-t ml-6">
+                    {/* Legend */}
+                    <div className="flex items-center gap-4 text-[10px] pt-1">
+                      <span className="flex items-center gap-1">
+                        <span className="inline-block h-2 w-2 rounded-full bg-emerald-500" />
+                        <span className="text-emerald-700 font-medium">Guest Houses</span>
+                      </span>
+                      <span className="flex items-center gap-1">
+                        <span className="inline-block h-2 w-2 rounded-full bg-sky-500" />
+                        <span className="text-sky-700 font-medium">Beds</span>
+                      </span>
+                    </div>
                     {woredas
                       .sort((a, b) => b.count - a.count)
                       .map((w) => (
                       <div key={w.area} className="flex items-center gap-2">
-                        <MapPin className="h-3 w-3 text-blue-400 shrink-0" />
+                        <MapPin className="h-3 w-3 text-slate-400 shrink-0" />
                         <div className="flex-1 min-w-0">
-                          <div className="flex items-center justify-between text-xs">
+                          <div className="flex items-center justify-between text-xs mb-0.5">
                             <span className="text-muted-foreground truncate">{w.area}</span>
-                            <span className="font-semibold text-blue-600 shrink-0 ml-2">{w.count}</span>
+                            <div className="flex items-center gap-2 shrink-0 ml-2">
+                              <span className="inline-flex items-center justify-center h-4 min-w-[16px] rounded bg-emerald-100 text-emerald-700 text-[10px] font-bold px-1">
+                                {w.count}
+                              </span>
+                              <span className="inline-flex items-center justify-center h-4 min-w-[16px] rounded bg-sky-100 text-sky-700 text-[10px] font-bold px-1">
+                                {w.beds.toLocaleString()}
+                              </span>
+                            </div>
                           </div>
-                          <div className="mt-0.5 h-1.5 overflow-hidden rounded-full bg-blue-50">
-                            <div
-                              className="h-full rounded-full bg-blue-400 transition-all"
-                              style={{ width: `${(w.count / maxWoredaCount) * 100}%` }}
-                            />
+                          <div className="space-y-0.5">
+                            <div className="h-1 overflow-hidden rounded-full bg-muted">
+                              <div
+                                className="h-full rounded-full bg-emerald-500 transition-all"
+                                style={{ width: `${(w.count / maxWoredaCount) * 100}%` }}
+                              />
+                            </div>
+                            <div className="h-1 overflow-hidden rounded-full bg-muted">
+                              <div
+                                className="h-full rounded-full bg-sky-500 transition-all"
+                                style={{ width: `${(w.beds / maxWoredaBeds) * 100}%` }}
+                              />
+                            </div>
                           </div>
                         </div>
                       </div>

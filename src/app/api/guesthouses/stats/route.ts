@@ -3,12 +3,13 @@ import { NextResponse } from 'next/server';
 
 export async function GET() {
   try {
-    const [total, subCityStats, licenseStats, totalRooms, avgRating, woredaStats] =
+    const [total, subCityStats, licenseStats, totalRooms, avgRating, woredaStats, woredaBedStats] =
       await Promise.all([
         db.guestHouse.count(),
         db.guestHouse.groupBy({
           by: ['subCity'],
           _count: true,
+          _sum: { numberOfRooms: true },
           orderBy: { subCity: 'asc' },
         }),
         db.guestHouse.groupBy({
@@ -26,18 +27,38 @@ export async function GET() {
           _count: true,
           orderBy: { subCity: 'asc' },
         }),
+        db.guestHouse.groupBy({
+          by: ['subCity', 'area'],
+          _sum: { numberOfRooms: true },
+          orderBy: { subCity: 'asc' },
+        }),
       ]);
 
     // Group woreda stats by subCity for easy lookup
-    const woredaBySubCity: Record<string, { area: string; count: number }[]> = {};
+    const woredaBySubCity: Record<string, { area: string; count: number; beds: number }[]> = {};
     for (const w of woredaStats) {
       if (!woredaBySubCity[w.subCity]) woredaBySubCity[w.subCity] = [];
-      woredaBySubCity[w.subCity].push({ area: w.area, count: w._count });
+      woredaBySubCity[w.subCity].push({ area: w.area, count: w._count, beds: 0 });
+    }
+    // Merge bed counts into woreda stats
+    for (const wb of woredaBedStats) {
+      const arr = woredaBySubCity[wb.subCity];
+      if (arr) {
+        const entry = arr.find((e) => e.area === wb.area);
+        if (entry) entry.beds = wb._sum.numberOfRooms || 0;
+      }
+    }
+
+    // Group total beds by subCity
+    const subCityBeds: Record<string, number> = {};
+    for (const sc of subCityStats) {
+      subCityBeds[sc.subCity] = sc._sum.numberOfRooms || 0;
     }
 
     return NextResponse.json({
       total,
-      subCityStats,
+      subCityStats: subCityStats.map((s) => ({ subCity: s.subCity, _count: s._count })),
+      subCityBeds,
       woredaBySubCity,
       licenseStats,
       totalRooms: totalRooms._sum.numberOfRooms || 0,
