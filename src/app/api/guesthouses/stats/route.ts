@@ -3,7 +3,7 @@ import { NextResponse } from 'next/server';
 
 export async function GET() {
   try {
-    const [total, subCityStats, licenseStats, totalRooms, avgRating] =
+    const [total, subCityStats, licenseStats, totalRooms, avgRating, woredaStats] =
       await Promise.all([
         db.guestHouse.count(),
         db.guestHouse.groupBy({
@@ -21,11 +21,24 @@ export async function GET() {
         db.guestHouse.aggregate({
           _avg: { serviceRating: true },
         }),
+        db.guestHouse.groupBy({
+          by: ['subCity', 'area'],
+          _count: true,
+          orderBy: { subCity: 'asc' },
+        }),
       ]);
+
+    // Group woreda stats by subCity for easy lookup
+    const woredaBySubCity: Record<string, { area: string; count: number }[]> = {};
+    for (const w of woredaStats) {
+      if (!woredaBySubCity[w.subCity]) woredaBySubCity[w.subCity] = [];
+      woredaBySubCity[w.subCity].push({ area: w.area, count: w._count });
+    }
 
     return NextResponse.json({
       total,
       subCityStats,
+      woredaBySubCity,
       licenseStats,
       totalRooms: totalRooms._sum.numberOfRooms || 0,
       avgRating: avgRating._avg.serviceRating
