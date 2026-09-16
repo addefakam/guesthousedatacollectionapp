@@ -1,10 +1,8 @@
-import { PrismaClient } from '@prisma/client';
+import { db } from '@/lib/db';
 import { NextRequest, NextResponse } from 'next/server';
 import { getServerSession } from 'next-auth';
 import { authOptions } from '../auth/[...nextauth]/route';
 import { hashPassword } from '@/lib/password';
-
-const prisma = new PrismaClient();
 
 export async function GET() {
   try {
@@ -15,7 +13,7 @@ export async function GET() {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 403 });
     }
 
-    const users = await prisma.user.findMany({
+    const users = await db.user.findMany({
       orderBy: { createdAt: 'desc' },
     });
 
@@ -44,7 +42,7 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    const existing = await prisma.user.findUnique({ where: { username } });
+    const existing = await db.user.findUnique({ where: { username } });
     if (existing) {
       return NextResponse.json(
         { error: 'Username already exists' },
@@ -52,7 +50,7 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    const newUser = await prisma.user.create({
+    const newUser = await db.user.create({
       data: {
         name,
         username,

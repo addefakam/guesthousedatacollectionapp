@@ -1,9 +1,7 @@
-import { PrismaClient } from '@prisma/client';
+import { db } from '@/lib/db';
 import { NextRequest, NextResponse } from 'next/server';
 import { getServerSession } from 'next-auth';
 import { authOptions } from '../../auth/[...nextauth]/route';
-
-const prisma = new PrismaClient();
 
 export async function DELETE(
   _request: NextRequest,
@@ -19,7 +17,7 @@ export async function DELETE(
 
     const { id } = await params;
 
-    const targetUser = await prisma.user.findUnique({ where: { id } });
+    const targetUser = await db.user.findUnique({ where: { id } });
     if (!targetUser) {
       return NextResponse.json({ error: 'Not found' }, { status: 404 });
     }
@@ -27,7 +25,7 @@ export async function DELETE(
       return NextResponse.json({ error: 'Cannot delete admin' }, { status: 403 });
     }
 
-    await prisma.user.delete({ where: { id } });
+    await db.user.delete({ where: { id } });
     return NextResponse.json({ success: true });
   } catch (error) {
     console.error('Error deleting user:', error);

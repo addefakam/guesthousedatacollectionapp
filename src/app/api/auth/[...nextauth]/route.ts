@@ -1,9 +1,7 @@
 import NextAuth, { type NextAuthOptions } from 'next-auth';
 import CredentialsProvider from 'next-auth/providers/credentials';
-import { PrismaClient } from '@prisma/client';
+import { db } from '@/lib/db';
 import { verifyPassword } from '@/lib/password';
-
-const prisma = new PrismaClient();
 
 export const authOptions: NextAuthOptions = {
   providers: [
@@ -19,12 +17,18 @@ export const authOptions: NextAuthOptions = {
         }
 
         try {
-          const user = await prisma.user.findUnique({
+          const user = await db.user.findUnique({
             where: { username: credentials.username },
           });
 
-          if (!user) return null;
-          if (!verifyPassword(credentials.password, user.password)) return null;
+          if (!user) {
+            console.log('Auth: User not found:', credentials.username);
+            return null;
+          }
+          if (!verifyPassword(credentials.password, user.password)) {
+            console.log('Auth: Invalid password for:', credentials.username);
+            return null;
+          }
 
           return {
             id: user.id,
