@@ -48,3 +48,23 @@ Stage Summary:
 - Different colors clearly distinguish GH count from beds count at all levels
 - Color legend included in expanded woreda breakdown section
 - API enhanced with additional groupBy query for per-woreda bed aggregation
+
+---
+Task ID: 3
+Agent: Main Agent
+Task: Fix login and data loading issues after previous changes
+
+Work Log:
+- Identified root cause: Prisma provider was changed from PostgreSQL to SQLite, breaking deployed version
+- Reverted prisma/schema.prisma back to provider = "postgresql" for deployment compatibility
+- Replaced standalone PrismaClient instances in auth route, users route, users/[id] route, and seed route with shared db from @/lib/db
+- Improved auth route with better error logging (logs username on auth failure)
+- Removed hardcoded NEXTAUTH_URL=http://localhost:3000 from .env (auto-detected by NextAuth)
+- Kept NEXTAUTH_SECRET for consistent JWT signing
+- Build successful, pushed fix to GitHub
+
+Stage Summary:
+- Login and data loading should now work on deployed version
+- All API routes use consistent shared database connection
+- Auth has better debug logging for troubleshooting
+- Prisma provider matches deployment database (PostgreSQL)
