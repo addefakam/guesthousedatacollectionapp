@@ -34,13 +34,31 @@ interface AttendanceRecord {
 }
 
 export default function CollectorAttendance() {
-  const { assignedSubCity, assignedArea, userId, userName } = useAuth();
+  const { userId, userName } = useAuth();
   const { toast } = useToast();
   const [meeting, setMeeting] = useState<Meeting | null>(null);
   const [guestHouses, setGuestHouses] = useState<GuestHouseRecord[]>([]);
   const [attendanceMap, setAttendanceMap] = useState<Record<string, string>>({}); // guestHouseId -> status
   const [loading, setLoading] = useState(true);
   const [toggling, setToggling] = useState<string | null>(null); // guestHouseId being toggled
+
+  // Fetch assignment from API (avoids stale JWT)
+  const [assignedSubCity, setAssignedSubCity] = useState<string | null>(null);
+  const [assignedArea, setAssignedArea] = useState<string | null>(null);
+
+  useEffect(() => {
+    async function fetchAssignment() {
+      try {
+        const res = await fetch('/api/users/me');
+        if (res.ok) {
+          const data = await res.json();
+          setAssignedSubCity(data.assignedSubCity || null);
+          setAssignedArea(data.assignedArea || null);
+        }
+      } catch { /* ignore */ }
+    }
+    fetchAssignment();
+  }, []);
 
   // Fetch active meeting
   useEffect(() => {

@@ -57,15 +57,6 @@ interface NewUserResponse {
   createdAt: string;
 }
 
-// Available sub-cities and areas in Bishoftu
-const SUB_CITIES = ['Daka', 'Burka', 'Bekelcha', 'Kore'];
-const AREAS_BY_SUBCITY: Record<string, string[]> = {
-  Daka: ['01', '02', '03', '04', '05', '06'],
-  Burka: ['01', '02', '03', '04', '05'],
-  Bekelcha: ['01', '02', '03', '04'],
-  Kore: ['01', '02', '03', '04', '05'],
-};
-
 export default function AdminPanel() {
   const { userName } = useAuth();
   const { toast } = useToast();
@@ -87,6 +78,10 @@ export default function AdminPanel() {
   const [editSubCity, setEditSubCity] = useState('');
   const [editArea, setEditArea] = useState('');
 
+  // Dynamic sub-city/area data from DB
+  const [subCities, setSubCities] = useState<string[]>([]);
+  const [areasBySubCity, setAreasBySubCity] = useState<Record<string, string[]>>({});
+
   const fetchUsers = useCallback(async () => {
     setLoading(true);
     try {
@@ -101,7 +96,50 @@ export default function AdminPanel() {
     }
   }, [toast]);
 
-  useEffect(() => { fetchUsers(); }, [fetchUsers]);
+  // Fetch sub-cities and areas from the guest house data in the DB
+  const fetchAreas = useCallback(async () => {
+    try {
+      const res = await fetch('/api/guesthouses/stats');
+      if (!res.ok) throw new Error();
+      const data = await res.json();
+
+      // Build sub-city -> areas map from woredaBySubCity
+      const scList: string[] = [];
+      const areaMap: Record<string, string[]> = {};
+
+      if (data.woredaBySubCity) {
+        for (const sc of Object.keys(data.woredaBySubCity)) {
+          scList.push(sc);
+          areaMap[sc] = data.woredaBySubCity[sc].map((w: { area: string }) => w.area).sort();
+        }
+      }
+
+      // Also add from subCityStats if any missing
+      if (data.subCityStats) {
+        for (const s of data.subCityStats) {
+          if (!areaMap[s.subCity]) {
+            scList.push(s.subCity);
+            areaMap[s.subCity] = [];
+          }
+        }
+      }
+
+      scList.sort();
+      setSubCities(scList);
+      setAreasBySubCity(areaMap);
+    } catch {
+      // Fallback to hardcoded
+      setSubCities(['Daka', 'Burka', 'Bekelcha', 'Kore']);
+      setAreasBySubCity({
+        Daka: ['01', '02', '03', '04', '05', '06'],
+        Burka: ['01', '02', '03', '04', '05'],
+        Bekelcha: ['01', '02', '03', '04'],
+        Kore: ['01', '02', '03', '04', '05'],
+      });
+    }
+  }, []);
+
+  useEffect(() => { fetchUsers(); fetchAreas(); }, [fetchUsers, fetchAreas]);
 
   const handleCreate = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -172,7 +210,7 @@ export default function AdminPanel() {
       if (!res.ok) throw new Error();
       setEditingId(null);
       fetchUsers();
-      toast({ title: 'Assignment Updated', description: 'Area assignment saved.' });
+      toast({ title: 'Assignment Updated', description: 'Area assignment saved. The collector should log out and log back in to see the change.' });
     } catch {
       toast({ title: 'Error', description: 'Failed to update assignment', variant: 'destructive' });
     }
@@ -197,6 +235,41 @@ export default function AdminPanel() {
     setEditSubCity(u.assignedSubCity || '');
     setEditArea(u.assignedArea || '');
   };
+
+  // Shared select renderer
+  const renderAreaSelects = (
+    scValue: string,
+    areaValue: string,
+    onScChange: (v: string) => void,
+    onAreaChange: (v: string) => void,
+    className: string,
+  ) => (
+    <>
+      <div className="space-y-2">
+        <Label>Assigned Sub-City</Label>
+        <select
+          className={className}
+          value={scValue}
+          onChange={(e) => { onScChange(e.target.value); onAreaChange(''); }}
+        >
+          <option value="">— Select —</option>
+          {subCities.map((sc) => <option key={sc} value={sc}>{sc}</option>)}
+        </select>
+      </div>
+      <div className="space-y-2">
+        <Label>Assigned Woreda</Label>
+        <select
+          className={className}
+          value={areaValue}
+          onChange={(e) => onAreaChange(e.target.value)}
+          disabled={!scValue}
+        >
+          <option value="">— Select —</option>
+          {(areasBySubCity[scValue] || []).map((a) => <option key={a} value={a}>{a}</option>)}
+        </select>
+      </div>
+    </>
+  );
 
   return (
     <div className="space-y-4">
@@ -245,29 +318,7 @@ export default function AdminPanel() {
               </div>
             </div>
             <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
-              <div className="space-y-2">
-                <Label>Assigned Sub-City</Label>
-                <select
-                  className="w-full rounded-md border bg-background px-3 py-2 text-sm"
-                  value={newSubCity}
-                  onChange={(e) => { setNewSubCity(e.target.value); setNewArea(''); }}
-                >
-                  <option value="">— Select —</option>
-                  {SUB_CITIES.map((sc) => <option key={sc} value={sc}>{sc}</option>)}
-                </select>
-              </div>
-              <div className="space-y-2">
-                <Label>Assigned Woreda</Label>
-                <select
-                  className="w-full rounded-md border bg-background px-3 py-2 text-sm"
-                  value={newArea}
-                  onChange={(e) => setNewArea(e.target.value)}
-                  disabled={!newSubCity}
-                >
-                  <option value="">— Select —</option>
-                  {(AREAS_BY_SUBCITY[newSubCity] || []).map((a) => <option key={a} value={a}>{a}</option>)}
-                </select>
-              </div>
+              {renderAreaSelects(newSubCity, newArea, setNewSubCity, setNewArea, 'w-full rounded-md border bg-background px-3 py-2 text-sm')}
             </div>
             <Button type="submit" className="w-full bg-emerald-600 hover:bg-emerald-700" disabled={creating}>
               {creating ? <><Loader2 className="mr-2 h-4 w-4 animate-spin" /> Creating...</> : 'Walitti Qabaa Daataa'}
@@ -341,23 +392,7 @@ export default function AdminPanel() {
                     <div className="mt-3 pt-3 border-t space-y-2">
                       <p className="text-xs font-medium text-muted-foreground">Assign Sub-City & Woreda:</p>
                       <div className="grid grid-cols-2 gap-2">
-                        <select
-                          className="rounded-md border bg-background px-2 py-1.5 text-xs"
-                          value={editSubCity}
-                          onChange={(e) => { setEditSubCity(e.target.value); setEditArea(''); }}
-                        >
-                          <option value="">— Sub-City —</option>
-                          {SUB_CITIES.map((sc) => <option key={sc} value={sc}>{sc}</option>)}
-                        </select>
-                        <select
-                          className="rounded-md border bg-background px-2 py-1.5 text-xs"
-                          value={editArea}
-                          onChange={(e) => setEditArea(e.target.value)}
-                          disabled={!editSubCity}
-                        >
-                          <option value="">— Woreda —</option>
-                          {(AREAS_BY_SUBCITY[editSubCity] || []).map((a) => <option key={a} value={a}>{a}</option>)}
-                        </select>
+                        {renderAreaSelects(editSubCity, editArea, setEditSubCity, setEditArea, 'rounded-md border bg-background px-2 py-1.5 text-xs')}
                       </div>
                       <div className="flex gap-2">
                         <Button size="sm" className="text-xs h-7 bg-emerald-600 hover:bg-emerald-700" onClick={() => handleAssign(u.id)}>Save</Button>
