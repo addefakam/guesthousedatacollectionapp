@@ -16,12 +16,13 @@ model User {
   password       String
   name           String
   role           String   @default("COLLECTOR") // ADMIN or COLLECTOR
-  assignedSubCity String? // sub-city assignment for collectors
-  assignedArea   String?  // woreda/area assignment for collectors
+  assignedSubCity String? // sub-city assignment for collectors (survey default)
+  assignedArea   String?  // woreda/area assignment for collectors (survey default)
   createdAt      DateTime @default(now())
   updatedAt      DateTime @updatedAt
 
-  attendances Attendance[]
+  attendances       Attendance[]
+  meetingAssignments CollectorAssignment[]
 }
 
 model GuestHouse {
@@ -64,6 +65,7 @@ model Meeting {
   updatedAt DateTime @updatedAt
 
   attendances Attendance[]
+  assignments  CollectorAssignment[]
 }
 
 model Attendance {
@@ -79,4 +81,18 @@ model Attendance {
   collector  User       @relation(fields: [collectorId], references: [id], onDelete: Cascade)
 
   @@unique([meetingId, guestHouseId]) // one attendance record per guest house per meeting
+}
+
+model CollectorAssignment {
+  id          String   @id @default(cuid())
+  collectorId String
+  meetingId   String
+  subCity     String
+  area        String
+  createdAt   DateTime @default(now())
+
+  collector User    @relation(fields: [collectorId], references: [id], onDelete: Cascade)
+  meeting   Meeting @relation(fields: [meetingId], references: [id], onDelete: Cascade)
+
+  @@unique([collectorId, meetingId, subCity, area]) // no duplicate assignments
 }
