@@ -37,6 +37,7 @@ import {
   MapPin,
 } from 'lucide-react';
 import { signOut } from 'next-auth/react';
+import { locationData } from '@/lib/location-data';
 
 interface UserData {
   id: string;
@@ -78,9 +79,12 @@ export default function AdminPanel() {
   const [editSubCity, setEditSubCity] = useState('');
   const [editArea, setEditArea] = useState('');
 
-  // Dynamic sub-city/area data from DB
-  const [subCities, setSubCities] = useState<string[]>([]);
-  const [areasBySubCity, setAreasBySubCity] = useState<Record<string, string[]>>({});
+  // Use the same location data as SurveyForm (source of truth)
+  const subCities = locationData.subCities.map((sc) => sc.name);
+  const areasBySubCity: Record<string, string[]> = {};
+  for (const sc of locationData.subCities) {
+    areasBySubCity[sc.name] = sc.areas;
+  }
 
   const fetchUsers = useCallback(async () => {
     setLoading(true);
@@ -96,50 +100,7 @@ export default function AdminPanel() {
     }
   }, [toast]);
 
-  // Fetch sub-cities and areas from the guest house data in the DB
-  const fetchAreas = useCallback(async () => {
-    try {
-      const res = await fetch('/api/guesthouses/stats');
-      if (!res.ok) throw new Error();
-      const data = await res.json();
-
-      // Build sub-city -> areas map from woredaBySubCity
-      const scList: string[] = [];
-      const areaMap: Record<string, string[]> = {};
-
-      if (data.woredaBySubCity) {
-        for (const sc of Object.keys(data.woredaBySubCity)) {
-          scList.push(sc);
-          areaMap[sc] = data.woredaBySubCity[sc].map((w: { area: string }) => w.area).sort();
-        }
-      }
-
-      // Also add from subCityStats if any missing
-      if (data.subCityStats) {
-        for (const s of data.subCityStats) {
-          if (!areaMap[s.subCity]) {
-            scList.push(s.subCity);
-            areaMap[s.subCity] = [];
-          }
-        }
-      }
-
-      scList.sort();
-      setSubCities(scList);
-      setAreasBySubCity(areaMap);
-    } catch {
-      // Fallback to hardcoded
-      setSubCities(['Daka', 'Burka', 'Bekelcha', 'Kore']);
-      setAreasBySubCity({
-        Daka: ['01', '02', '03', '04', '05', '06'],
-        Burka: ['01', '02', '03', '04', '05'],
-        Bekelcha: ['01', '02', '03', '04'],
-        Kore: ['01', '02', '03', '04', '05'],
-      });
-    }
-  }, []);
-
-  useEffect(() => { fetchUsers(); fetchAreas(); }, [fetchUsers, fetchAreas]);
+  useEffect(() => { fetchUsers(); }, [fetchUsers]);
 
   const handleCreate = async (e: React.FormEvent) => {
     e.preventDefault();
