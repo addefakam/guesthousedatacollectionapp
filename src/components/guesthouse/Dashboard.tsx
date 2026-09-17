@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useMemo } from 'react';
 import {
   Card,
   CardContent,
@@ -10,15 +10,33 @@ import {
 } from '@/components/ui/card';
 import { Skeleton } from '@/components/ui/skeleton';
 import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@/components/ui/select';
+import {
   Building2,
   Bed,
   Star,
   FileCheck,
   TrendingUp,
   ChevronDown,
-  ChevronRight,
   MapPin,
+  BarChart3,
 } from 'lucide-react';
+import {
+  BarChart,
+  Bar,
+  XAxis,
+  YAxis,
+  CartesianGrid,
+  Tooltip,
+  ResponsiveContainer,
+  Cell,
+  LabelList,
+} from 'recharts';
 
 interface SubCityStat {
   subCity: string;
@@ -36,14 +54,31 @@ interface Stats {
   subCityBeds: Record<string, number>;
   woredaBySubCity: Record<string, { area: string; count: number; beds: number }[]>;
   licenseStats: LicenseStat[];
+  licenseBeds: Record<string, number>;
   totalRooms: number;
   avgRating: number;
 }
+
+const CHART_COLORS = [
+  '#10b981', // emerald-500
+  '#0ea5e9', // sky-500
+  '#8b5cf6', // violet-500
+  '#f59e0b', // amber-500
+  '#ef4444', // red-500
+  '#06b6d4', // cyan-500
+  '#ec4899', // pink-500
+  '#84cc16', // lime-500
+  '#6366f1', // indigo-500
+  '#14b8a6', // teal-500
+];
+
+type ChartView = 'licenseType' | 'subCity';
 
 export default function Dashboard() {
   const [stats, setStats] = useState<Stats | null>(null);
   const [loading, setLoading] = useState(true);
   const [expandedSubCities, setExpandedSubCities] = useState<Set<string>>(new Set());
+  const [chartView, setChartView] = useState<ChartView>('licenseType');
 
   useEffect(() => {
     async function fetchStats() {
@@ -60,6 +95,30 @@ export default function Dashboard() {
     }
     fetchStats();
   }, []);
+
+  // Prepare chart data based on selected view
+  const chartData = useMemo(() => {
+    if (!stats) return [];
+
+    if (chartView === 'licenseType') {
+      return stats.licenseStats
+        .map((ls) => ({
+          name: ls.licenseType,
+          beds: stats.licenseBeds[ls.licenseType] || 0,
+          count: ls._count,
+        }))
+        .sort((a, b) => b.beds - a.beds);
+    }
+
+    // subCity
+    return stats.subCityStats
+      .map((sc) => ({
+        name: sc.subCity,
+        beds: stats.subCityBeds[sc.subCity] || 0,
+        count: sc._count,
+      }))
+      .sort((a, b) => b.beds - a.beds);
+  }, [stats, chartView]);
 
   const toggleSubCity = (subCity: string) => {
     setExpandedSubCities((prev) => {
@@ -135,8 +194,29 @@ export default function Dashboard() {
     return 'Poor';
   };
 
+  // Custom tooltip for the chart
+  const CustomTooltip = ({ active, payload, label }: { active?: boolean; payload?: Array<{ value: number; dataKey: string }>; label?: string }) => {
+    if (!active || !payload?.length) return null;
+    const data = payload[0];
+    const ghCount = chartData.find(d => d.name === label)?.count || 0;
+    return (
+      <div className="rounded-lg border bg-white px-3 py-2 shadow-lg text-xs">
+        <p className="font-semibold text-sm mb-1">{label}</p>
+        <p className="text-sky-600">
+          <span className="inline-block h-2 w-2 rounded-full bg-sky-500 mr-1.5" />
+          Beds: <span className="font-bold">{data.value.toLocaleString()}</span>
+        </p>
+        <p className="text-emerald-600 mt-0.5">
+          <span className="inline-block h-2 w-2 rounded-full bg-emerald-500 mr-1.5" />
+          Guest Houses: <span className="font-bold">{ghCount}</span>
+        </p>
+      </div>
+    );
+  };
+
   return (
     <div className="space-y-4">
+      {/* Summary Cards */}
       <div className="grid grid-cols-2 gap-3">
         <Card>
           <CardContent className="p-4">
@@ -200,6 +280,109 @@ export default function Dashboard() {
           </CardContent>
         </Card>
       </div>
+
+      {/* Interactive Bar Chart - Beds Distribution */}
+      <Card>
+        <CardHeader className="pb-3">
+          <div className="flex items-center justify-between gap-2">
+            <div className="min-w-0">
+              <CardTitle className="flex items-center gap-2 text-lg">
+                <BarChart3 className="h-5 w-5 text-sky-600" />
+                Beds Distribution
+              </CardTitle>
+              <CardDescription>
+                {chartView === 'licenseType'
+                  ? 'Number of beds by license type'
+                  : 'Number of beds by sub-city'}
+              </CardDescription>
+            </div>
+            <Select
+              value={chartView}
+              onValueChange={(v) => setChartView(v as ChartView)}
+            >
+              <SelectTrigger className="w-[180px] shrink-0 text-xs h-8">
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="licenseType">License Type vs Beds</SelectItem>
+                <SelectItem value="subCity">Sub-City vs Beds</SelectItem>
+              </SelectContent>
+            </Select>
+          </div>
+        </CardHeader>
+        <CardContent>
+          {chartData.length > 0 ? (
+            <div className="h-[280px] w-full sm:h-[320px]">
+              <ResponsiveContainer width="100%" height="100%">
+                <BarChart
+                  data={chartData}
+                  margin={{ top: 20, right: 10, left: 0, bottom: 5 }}
+                >
+                  <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#e5e7eb" />
+                  <XAxis
+                    dataKey="name"
+                    tick={{ fontSize: 11, fill: '#6b7280' }}
+                    axisLine={{ stroke: '#d1d5db' }}
+                    tickLine={false}
+                    interval={0}
+                    angle={chartData.length > 4 ? -25 : 0}
+                    textAnchor={chartData.length > 4 ? 'end' : 'middle'}
+                    height={chartData.length > 4 ? 60 : 30}
+                  />
+                  <YAxis
+                    tick={{ fontSize: 11, fill: '#6b7280' }}
+                    axisLine={false}
+                    tickLine={false}
+                    width={45}
+                  />
+                  <Tooltip content={<CustomTooltip />} />
+                  <Bar
+                    dataKey="beds"
+                    radius={[6, 6, 0, 0]}
+                    maxBarSize={56}
+                  >
+                    {chartData.map((_entry, index) => (
+                      <Cell
+                        key={`cell-${index}`}
+                        fill={CHART_COLORS[index % CHART_COLORS.length]}
+                      />
+                    ))}
+                    <LabelList
+                      dataKey="beds"
+                      position="top"
+                      formatter={(value: number) => value.toLocaleString()}
+                      style={{ fontSize: 11, fontWeight: 600, fill: '#374151' }}
+                    />
+                  </Bar>
+                </BarChart>
+              </ResponsiveContainer>
+            </div>
+          ) : (
+            <div className="flex h-40 items-center justify-center text-sm text-muted-foreground">
+              No data available for this view
+            </div>
+          )}
+
+          {/* Chart summary pills */}
+          {chartData.length > 0 && (
+            <div className="mt-3 flex flex-wrap gap-2">
+              {chartData.map((item, idx) => (
+                <span
+                  key={item.name}
+                  className="inline-flex items-center gap-1.5 rounded-full border px-2.5 py-1 text-[11px]"
+                >
+                  <span
+                    className="inline-block h-2.5 w-2.5 rounded-full shrink-0"
+                    style={{ backgroundColor: CHART_COLORS[idx % CHART_COLORS.length] }}
+                  />
+                  <span className="font-medium truncate max-w-[100px]">{item.name}</span>
+                  <span className="text-muted-foreground">({item.beds.toLocaleString()} beds)</span>
+                </span>
+              ))}
+            </div>
+          )}
+        </CardContent>
+      </Card>
 
       {/* Records by Sub-City with Woreda breakdown */}
       <Card>
@@ -339,6 +522,7 @@ export default function Dashboard() {
         </CardContent>
       </Card>
 
+      {/* License Type Distribution */}
       <Card>
         <CardHeader className="pb-3">
           <CardTitle className="text-lg">License Type Distribution</CardTitle>
@@ -348,6 +532,7 @@ export default function Dashboard() {
           <div className="grid grid-cols-2 gap-3">
             {stats.licenseStats.map((ls) => {
               const pct = Math.round((ls._count / stats.total) * 100);
+              const beds = stats.licenseBeds[ls.licenseType] || 0;
               return (
                 <div
                   key={ls.licenseType}
@@ -358,6 +543,9 @@ export default function Dashboard() {
                   </p>
                   <p className="text-xs font-medium">{ls.licenseType}</p>
                   <p className="text-xs text-muted-foreground">{pct}%</p>
+                  <p className="mt-1 text-xs font-semibold text-sky-600">
+                    {beds.toLocaleString()} beds
+                  </p>
                 </div>
               );
             })}

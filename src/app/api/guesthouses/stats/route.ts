@@ -3,7 +3,7 @@ import { NextResponse } from 'next/server';
 
 export async function GET() {
   try {
-    const [total, subCityStats, licenseStats, totalRooms, avgRating, woredaStats, woredaBedStats] =
+    const [total, subCityStats, licenseStats, licenseBedStats, totalRooms, avgRating, woredaStats, woredaBedStats] =
       await Promise.all([
         db.guestHouse.count(),
         db.guestHouse.groupBy({
@@ -15,6 +15,10 @@ export async function GET() {
         db.guestHouse.groupBy({
           by: ['licenseType'],
           _count: true,
+        }),
+        db.guestHouse.groupBy({
+          by: ['licenseType'],
+          _sum: { numberOfRooms: true },
         }),
         db.guestHouse.aggregate({
           _sum: { numberOfRooms: true },
@@ -55,12 +59,19 @@ export async function GET() {
       subCityBeds[sc.subCity] = sc._sum.numberOfRooms || 0;
     }
 
+    // Map beds per license type
+    const licenseBeds: Record<string, number> = {};
+    for (const lb of licenseBedStats) {
+      licenseBeds[lb.licenseType] = lb._sum.numberOfRooms || 0;
+    }
+
     return NextResponse.json({
       total,
       subCityStats: subCityStats.map((s) => ({ subCity: s.subCity, _count: s._count })),
       subCityBeds,
       woredaBySubCity,
       licenseStats,
+      licenseBeds,
       totalRooms: totalRooms._sum.numberOfRooms || 0,
       avgRating: avgRating._avg.serviceRating
         ? Math.round(avgRating._avg.serviceRating * 10) / 10
