@@ -1,0 +1,700 @@
+     1→'use client';
+     2→
+     3→import { useState, useEffect, useMemo } from 'react';
+     4→import {
+     5→  Card,
+     6→  CardContent,
+     7→  CardDescription,
+     8→  CardHeader,
+     9→  CardTitle,
+    10→} from '@/components/ui/card';
+    11→import { Skeleton } from '@/components/ui/skeleton';
+    12→import {
+    13→  Select,
+    14→  SelectContent,
+    15→  SelectItem,
+    16→  SelectTrigger,
+    17→  SelectValue,
+    18→} from '@/components/ui/select';
+    19→import {
+    20→  Building2,
+    21→  Bed,
+    22→  Star,
+    23→  FileCheck,
+    24→  TrendingUp,
+    25→  ChevronDown,
+    26→  MapPin,
+    27→  BarChart3,
+    28→  X,
+    29→  Loader2,
+    30→} from 'lucide-react';
+    31→import {
+    32→  BarChart,
+    33→  Bar,
+    34→  XAxis,
+    35→  YAxis,
+    36→  CartesianGrid,
+    37→  Tooltip,
+    38→  ResponsiveContainer,
+    39→  Cell,
+    40→  LabelList,
+    41→} from 'recharts';
+    42→
+    43→interface SubCityStat {
+    44→  subCity: string;
+    45→  _count: number;
+    46→}
+    47→
+    48→interface LicenseStat {
+    49→  licenseType: string;
+    50→  _count: number;
+    51→}
+    52→
+    53→interface Stats {
+    54→  total: number;
+    55→  subCityStats: SubCityStat[];
+    56→  subCityBeds: Record<string, number>;
+    57→  woredaBySubCity: Record<string, { area: string; count: number; beds: number }[]>;
+    58→  licenseStats: LicenseStat[];
+    59→  licenseBeds: Record<string, number>;
+    60→  totalRooms: number;
+    61→  avgRating: number;
+    62→}
+    63→
+    64→const CHART_COLORS = [
+    65→  '#10b981', // emerald-500
+    66→  '#0ea5e9', // sky-500
+    67→  '#8b5cf6', // violet-500
+    68→  '#f59e0b', // amber-500
+    69→  '#ef4444', // red-500
+    70→  '#06b6d4', // cyan-500
+    71→  '#ec4899', // pink-500
+    72→  '#84cc16', // lime-500
+    73→  '#6366f1', // indigo-500
+    74→  '#14b8a6', // teal-500
+    75→];
+    76→
+    77→type ChartView = 'licenseType' | 'subCity';
+    78→
+    79→export default function Dashboard() {
+    80→  const [stats, setStats] = useState<Stats | null>(null);
+    81→  const [loading, setLoading] = useState(true);
+    82→  const [expandedSubCities, setExpandedSubCities] = useState<Set<string>>(new Set());
+    83→  const [chartView, setChartView] = useState<ChartView>('licenseType');
+    84→  const [selectedBar, setSelectedBar] = useState<string | null>(null);
+    85→  const [detailRecords, setDetailRecords] = useState<Record<string, unknown>[] | null>(null);
+    86→  const [detailLoading, setDetailLoading] = useState(false);
+    87→  const [detailMeta, setDetailMeta] = useState<{ filterBy: string; value: string } | null>(null);
+    88→
+    89→  useEffect(() => {
+    90→    async function fetchStats() {
+    91→      try {
+    92→        const res = await fetch('/api/guesthouses/stats');
+    93→        if (!res.ok) throw new Error();
+    94→        const data = await res.json();
+    95→        setStats(data);
+    96→      } catch {
+    97→        // stats will remain null
+    98→      } finally {
+    99→        setLoading(false);
+   100→      }
+   101→    }
+   102→    fetchStats();
+   103→  }, []);
+   104→
+   105→  // Prepare chart data based on selected view
+   106→  const chartData = useMemo(() => {
+   107→    if (!stats) return [];
+   108→
+   109→    if (chartView === 'licenseType') {
+   110→      return stats.licenseStats
+   111→        .map((ls) => ({
+   112→          name: ls.licenseType,
+   113→          beds: stats.licenseBeds[ls.licenseType] || 0,
+   114→          count: ls._count,
+   115→        }))
+   116→        .sort((a, b) => b.beds - a.beds);
+   117→    }
+   118→
+   119→    // subCity
+   120→    return stats.subCityStats
+   121→      .map((sc) => ({
+   122→        name: sc.subCity,
+   123→        beds: stats.subCityBeds[sc.subCity] || 0,
+   124→        count: sc._count,
+   125→      }))
+   126→      .sort((a, b) => b.beds - a.beds);
+   127→  }, [stats, chartView]);
+   128→
+   129→  const toggleSubCity = (subCity: string) => {
+   130→    setExpandedSubCities((prev) => {
+   131→      const next = new Set(prev);
+   132→      if (next.has(subCity)) next.delete(subCity);
+   133→      else next.add(subCity);
+   134→      return next;
+   135→    });
+   136→  };
+   137→
+   138→  const expandAll = () => {
+   139→    if (!stats) return;
+   140→    setExpandedSubCities(new Set(stats.subCityStats.map((s) => s.subCity)));
+   141→  };
+   142→
+   143→  const collapseAll = () => {
+   144→    setExpandedSubCities(new Set());
+   145→  };
+   146→
+   147→  // Handle bar click — fetch detail records from API
+   148→  const handleBarClick = async (barName: string) => {
+   149→    // Toggle off if clicking the same bar
+   150→    if (selectedBar === barName) {
+   151→      setSelectedBar(null);
+   152→      setDetailRecords(null);
+   153→      setDetailMeta(null);
+   154→      return;
+   155→    }
+   156→
+   157→    setSelectedBar(barName);
+   158→    setDetailLoading(true);
+   159→    setDetailRecords(null);
+   160→
+   161→    const filterBy = chartView === 'licenseType' ? 'licenseType' : 'subCity';
+   162→    setDetailMeta({ filterBy, value: barName });
+   163→
+   164→    try {
+   165→      const res = await fetch(`/api/guesthouses/details?filterBy=${filterBy}&value=${encodeURIComponent(barName)}`);
+   166→      if (!res.ok) throw new Error();
+   167→      const data = await res.json();
+   168→      setDetailRecords(data.records || []);
+   169→    } catch {
+   170→      setDetailRecords([]);
+   171→    } finally {
+   172→      setDetailLoading(false);
+   173→    }
+   174→  };
+   175→
+   176→  // Clear detail when switching chart view
+   177→  const handleChartViewChange = (v: string) => {
+   178→    setChartView(v as ChartView);
+   179→    setSelectedBar(null);
+   180→    setDetailRecords(null);
+   181→    setDetailMeta(null);
+   182→  };
+   183→
+   184→  if (loading) {
+   185→    return (
+   186→      <div className="space-y-4">
+   187→        <div className="grid grid-cols-2 gap-3">
+   188→          {[1, 2, 3, 4].map((i) => (
+   189→            <Card key={i}>
+   190→              <CardContent className="p-4">
+   191→                <Skeleton className="mb-2 h-4 w-20" />
+   192→                <Skeleton className="h-8 w-16" />
+   193→              </CardContent>
+   194→            </Card>
+   195→          ))}
+   196→        </div>
+   197→        <Card>
+   198→          <CardContent className="p-4">
+   199→            <Skeleton className="h-40 w-full" />
+   200→          </CardContent>
+   201→        </Card>
+   202→      </div>
+   203→    );
+   204→  }
+   205→
+   206→  if (!stats || stats.total === 0) {
+   207→    return (
+   208→      <Card>
+   209→        <CardContent className="flex flex-col items-center justify-center py-16 text-center">
+   210→          <TrendingUp className="mb-3 h-12 w-12 text-muted-foreground/40" />
+   211→          <p className="text-lg font-medium text-muted-foreground">
+   212→            No Data Yet
+   213→          </p>
+   214→          <p className="mt-1 text-sm text-muted-foreground/70">
+   215→            Submit your first survey to see statistics here.
+   216→          </p>
+   217→        </CardContent>
+   218→      </Card>
+   219→    );
+   220→  }
+   221→
+   222→  const maxSubCityCount = Math.max(
+   223→    ...stats.subCityStats.map((s) => s._count),
+   224→    1
+   225→  );
+   226→
+   227→  const maxSubCityBeds = Math.max(
+   228→    ...Object.values(stats.subCityBeds),
+   229→    1
+   230→  );
+   231→
+   232→  const ratingLabel = (r: number) => {
+   233→    if (r >= 4.5) return 'Excellent';
+   234→    if (r >= 3.5) return 'Very Good';
+   235→    if (r >= 2.5) return 'Good';
+   236→    if (r >= 1.5) return 'Fair';
+   237→    return 'Poor';
+   238→  };
+   239→
+   240→  // Custom tooltip for the chart
+   241→  const CustomTooltip = ({ active, payload, label }: { active?: boolean; payload?: Array<{ value: number; dataKey: string }>; label?: string }) => {
+   242→    if (!active || !payload?.length) return null;
+   243→    const data = payload[0];
+   244→    const countValue = chartData.find(d => d.name === label)?.count || 0;
+   245→    // Label changes based on chart view: license type name (e.g. "Resort", "Hotel") or "Guest Houses"
+   246→    const countLabel = chartView === 'licenseType' ? label : 'Guest Houses';
+   247→    return (
+   248→      <div className="rounded-lg border bg-white px-3 py-2 shadow-lg text-xs">
+   249→        <p className="font-semibold text-sm mb-1">{label}</p>
+   250→        <p className="text-sky-600">
+   251→          <span className="inline-block h-2 w-2 rounded-full bg-sky-500 mr-1.5" />
+   252→          Beds: <span className="font-bold">{data.value.toLocaleString()}</span>
+   253→        </p>
+   254→        <p className="text-emerald-600 mt-0.5">
+   255→          <span className="inline-block h-2 w-2 rounded-full bg-emerald-500 mr-1.5" />
+   256→          {countLabel}: <span className="font-bold">{countValue}</span>
+   257→        </p>
+   258→      </div>
+   259→    );
+   260→  };
+   261→
+   262→  return (
+   263→    <div className="space-y-4">
+   264→      {/* Summary Cards */}
+   265→      <div className="grid grid-cols-2 gap-3">
+   266→        <Card>
+   267→          <CardContent className="p-4">
+   268→            <div className="flex items-center gap-2">
+   269→              <div className="rounded-lg bg-emerald-100 p-2">
+   270→                <Building2 className="h-5 w-5 text-emerald-600" />
+   271→              </div>
+   272→              <div>
+   273→                <p className="text-xs text-muted-foreground">Total</p>
+   274→                <p className="text-2xl font-bold">{stats.total}</p>
+   275→              </div>
+   276→            </div>
+   277→          </CardContent>
+   278→        </Card>
+   279→
+   280→        <Card>
+   281→          <CardContent className="p-4">
+   282→            <div className="flex items-center gap-2">
+   283→              <div className="rounded-lg bg-blue-100 p-2">
+   284→                <Bed className="h-5 w-5 text-blue-600" />
+   285→              </div>
+   286→              <div>
+   287→                <p className="text-xs text-muted-foreground">Total Rooms</p>
+   288→                <p className="text-2xl font-bold">
+   289→                  {stats.totalRooms.toLocaleString()}
+   290→                </p>
+   291→              </div>
+   292→            </div>
+   293→          </CardContent>
+   294→        </Card>
+   295→
+   296→        <Card>
+   297→          <CardContent className="p-4">
+   298→            <div className="flex items-center gap-2">
+   299→              <div className="rounded-lg bg-amber-100 p-2">
+   300→                <Star className="h-5 w-5 text-amber-600" />
+   301→              </div>
+   302→              <div>
+   303→                <p className="text-xs text-muted-foreground">Avg Rating</p>
+   304→                <p className="text-2xl font-bold">{stats.avgRating}</p>
+   305→                <p className="text-xs text-muted-foreground">
+   306→                  {ratingLabel(stats.avgRating)}
+   307→                </p>
+   308→              </div>
+   309→            </div>
+   310→          </CardContent>
+   311→        </Card>
+   312→
+   313→        <Card>
+   314→          <CardContent className="p-4">
+   315→            <div className="flex items-center gap-2">
+   316→              <div className="rounded-lg bg-purple-100 p-2">
+   317→                <FileCheck className="h-5 w-5 text-purple-600" />
+   318→              </div>
+   319→              <div>
+   320→                <p className="text-xs text-muted-foreground">Licensed</p>
+   321→                <p className="text-2xl font-bold">{stats.total}</p>
+   322→                <p className="text-xs text-muted-foreground">records</p>
+   323→              </div>
+   324→            </div>
+   325→          </CardContent>
+   326→        </Card>
+   327→      </div>
+   328→
+   329→      {/* Interactive Bar Chart - Beds Distribution */}
+   330→      <Card>
+   331→        <CardHeader className="pb-3">
+   332→          <div className="flex items-center justify-between gap-2">
+   333→            <div className="min-w-0">
+   334→              <CardTitle className="flex items-center gap-2 text-lg">
+   335→                <BarChart3 className="h-5 w-5 text-sky-600" />
+   336→                Beds Distribution
+   337→              </CardTitle>
+   338→              <CardDescription>
+   339→                {chartView === 'licenseType'
+   340→                  ? 'Number of beds by license type'
+   341→                  : 'Number of beds by sub-city'}
+   342→              </CardDescription>
+   343→            </div>
+   344→            <Select
+   345→              value={chartView}
+   346→              onValueChange={(v) => handleChartViewChange(v)}
+   347→            >
+   348→              <SelectTrigger className="w-[180px] shrink-0 text-xs h-8">
+   349→                <SelectValue />
+   350→              </SelectTrigger>
+   351→              <SelectContent>
+   352→                <SelectItem value="licenseType">License Type vs Beds</SelectItem>
+   353→                <SelectItem value="subCity">Sub-City vs Beds</SelectItem>
+   354→              </SelectContent>
+   355→            </Select>
+   356→          </div>
+   357→        </CardHeader>
+   358→        <CardContent>
+   359→          {chartData.length > 0 ? (
+   360→            <div className="h-[280px] w-full sm:h-[320px]">
+   361→              <ResponsiveContainer width="100%" height="100%">
+   362→                <BarChart
+   363→                  data={chartData}
+   364→                  margin={{ top: 20, right: 10, left: 0, bottom: 5 }}
+   365→                >
+   366→                  <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#e5e7eb" />
+   367→                  <XAxis
+   368→                    dataKey="name"
+   369→                    tick={{ fontSize: 11, fill: '#6b7280' }}
+   370→                    axisLine={{ stroke: '#d1d5db' }}
+   371→                    tickLine={false}
+   372→                    interval={0}
+   373→                    angle={chartData.length > 4 ? -25 : 0}
+   374→                    textAnchor={chartData.length > 4 ? 'end' : 'middle'}
+   375→                    height={chartData.length > 4 ? 60 : 30}
+   376→                  />
+   377→                  <YAxis
+   378→                    tick={{ fontSize: 11, fill: '#6b7280' }}
+   379→                    axisLine={false}
+   380→                    tickLine={false}
+   381→                    width={45}
+   382→                  />
+   383→                  <Tooltip content={<CustomTooltip />} />
+   384→                  <Bar
+   385→                    dataKey="beds"
+   386→                    radius={[6, 6, 0, 0]}
+   387→                    maxBarSize={56}
+   388→                    onClick={(data: { name?: string }) => {
+   389→                      if (data?.name) handleBarClick(data.name);
+   390→                    }}
+   391→                    style={{ cursor: 'pointer' }}
+   392→                  >
+   393→                    {chartData.map((entry, index) => (
+   394→                      <Cell
+   395→                        key={`cell-${index}`}
+   396→                        fill={CHART_COLORS[index % CHART_COLORS.length]}
+   397→                        stroke={selectedBar === entry.name ? '#1e293b' : 'none'}
+   398→                        strokeWidth={selectedBar === entry.name ? 2 : 0}
+   399→                      />
+   400→                    ))}
+   401→                    <LabelList
+   402→                      dataKey="beds"
+   403→                      position="top"
+   404→                      formatter={(value: number) => value.toLocaleString()}
+   405→                      style={{ fontSize: 11, fontWeight: 600, fill: '#374151' }}
+   406→                    />
+   407→                  </Bar>
+   408→                </BarChart>
+   409→              </ResponsiveContainer>
+   410→            </div>
+   411→          ) : (
+   412→            <div className="flex h-40 items-center justify-center text-sm text-muted-foreground">
+   413→              No data available for this view
+   414→            </div>
+   415→          )}
+   416→
+   417→          {/* Click hint */}
+   418→          {!selectedBar && chartData.length > 0 && (
+   419→            <p className="mt-2 text-center text-[11px] text-muted-foreground/60">
+   420→              Click any bar to see detailed records
+   421→            </p>
+   422→          )}
+   423→
+   424→          {/* Clicked bar detail table */}
+   425→          {selectedBar && detailMeta && (
+   426→            <div className="mt-3 rounded-lg border bg-slate-50 overflow-hidden">
+   427→              <div className="flex items-center justify-between px-3 py-2 bg-slate-100 border-b">
+   428→                <div className="flex items-center gap-2">
+   429→                  <Building2 className="h-4 w-4 text-slate-500" />
+   430→                  <span className="text-sm font-semibold text-slate-700">
+   431→                    {selectedBar}
+   432→                  </span>
+   433→                  <span className="text-xs text-muted-foreground">
+   434→                    — {detailRecords ? `${detailRecords.length} record${detailRecords.length !== 1 ? 's' : ''}` : 'Loading...'}
+   435→                  </span>
+   436→                </div>
+   437→                <button
+   438→                  type="button"
+   439→                  onClick={() => { setSelectedBar(null); setDetailRecords(null); setDetailMeta(null); }}
+   440→                  className="rounded p-1 hover:bg-slate-200 transition-colors"
+   441→                >
+   442→                  <X className="h-4 w-4 text-slate-500" />
+   443→                </button>
+   444→              </div>
+   445→              {detailLoading ? (
+   446→                <div className="flex items-center justify-center py-8 gap-2 text-sm text-muted-foreground">
+   447→                  <Loader2 className="h-4 w-4 animate-spin" />
+   448→                  Loading details...
+   449→                </div>
+   450→              ) : detailRecords && detailRecords.length > 0 ? (
+   451→                <div className="overflow-x-auto">
+   452→                  <table className="w-full text-xs">
+   453→                    <thead>
+   454→                      <tr className="border-b bg-slate-100/60">
+   455→                        <th className="px-2.5 py-2 text-left font-semibold text-slate-600">#</th>
+   456→                        <th className="px-2.5 py-2 text-left font-semibold text-slate-600">Name</th>
+   457→                        <th className="px-2.5 py-2 text-left font-semibold text-slate-600">Sub-City</th>
+   458→                        <th className="px-2.5 py-2 text-left font-semibold text-slate-600">Woreda</th>
+   459→                        <th className="px-2.5 py-2 text-left font-semibold text-slate-600">License</th>
+   460→                        <th className="px-2.5 py-2 text-right font-semibold text-slate-600">Rooms</th>
+   461→                        <th className="px-2.5 py-2 text-center font-semibold text-slate-600">Rating</th>
+   462→                        <th className="px-2.5 py-2 text-center font-semibold text-slate-600">WiFi</th>
+   463→                        <th className="px-2.5 py-2 text-center font-semibold text-slate-600">Parking</th>
+   464→                      </tr>
+   465→                    </thead>
+   466→                    <tbody>
+   467→                      {detailRecords.map((rec, i) => {
+   468→                        const r = rec as Record<string, unknown>;
+   469→                        return (
+   470→                          <tr key={i} className="border-b last:border-b-0 hover:bg-white/60">
+   471→                            <td className="px-2.5 py-1.5 text-muted-foreground">{i + 1}</td>
+   472→                            <td className="px-2.5 py-1.5 font-medium text-slate-700 max-w-[140px] truncate">{String(r.guestHouseName || '')}</td>
+   473→                            <td className="px-2.5 py-1.5 text-slate-600">{String(r.subCity || '')}</td>
+   474→                            <td className="px-2.5 py-1.5 text-slate-600">{String(r.area || '')}</td>
+   475→                            <td className="px-2.5 py-1.5">
+   476→                              <span className="inline-flex items-center rounded-full bg-violet-100 px-1.5 py-0.5 text-[10px] font-semibold text-violet-700">
+   477→                                {String(r.licenseType || '')}
+   478→                              </span>
+   479→                            </td>
+   480→                            <td className="px-2.5 py-1.5 text-right font-semibold text-sky-600">{Number(r.numberOfRooms || 0).toLocaleString()}</td>
+   481→                            <td className="px-2.5 py-1.5 text-center">
+   482→                              <span className={`inline-flex items-center justify-center h-5 w-5 rounded-full text-[10px] font-bold ${
+   483→                                Number(r.serviceRating) >= 4 ? 'bg-amber-100 text-amber-700' :
+   484→                                Number(r.serviceRating) >= 2 ? 'bg-orange-100 text-orange-700' :
+   485→                                'bg-red-100 text-red-700'
+   486→                              }`}>
+   487→                                {Number(r.serviceRating || 0)}
+   488→                              </span>
+   489→                            </td>
+   490→                            <td className="px-2.5 py-1.5 text-center">
+   491→                              {r.hasWiFi ? <span className="text-emerald-500 font-bold text-[10px]">Yes</span> : <span className="text-slate-300 text-[10px]">—</span>}
+   492→                            </td>
+   493→                            <td className="px-2.5 py-1.5 text-center">
+   494→                              {r.hasParking ? <span className="text-emerald-500 font-bold text-[10px]">Yes</span> : <span className="text-slate-300 text-[10px]">—</span>}
+   495→                            </td>
+   496→                          </tr>
+   497→                        );
+   498→                      })}
+   499→                    </tbody>
+   500→                  </table>
+   501→                </div>
+   502→              ) : (
+   503→                <div className="py-6 text-center text-sm text-muted-foreground">No records found</div>
+   504→              )}
+   505→            </div>
+   506→          )}
+   507→
+   508→          {/* Chart summary pills */}
+   509→          {chartData.length > 0 && (
+   510→            <div className="mt-3 flex flex-wrap gap-2">
+   511→              {chartData.map((item, idx) => (
+   512→                <span
+   513→                  key={item.name}
+   514→                  className="inline-flex items-center gap-1.5 rounded-full border px-2.5 py-1 text-[11px]"
+   515→                >
+   516→                  <span
+   517→                    className="inline-block h-2.5 w-2.5 rounded-full shrink-0"
+   518→                    style={{ backgroundColor: CHART_COLORS[idx % CHART_COLORS.length] }}
+   519→                  />
+   520→                  <span className="font-medium truncate max-w-[100px]">{item.name}</span>
+   521→                  <span className="text-muted-foreground">({item.beds.toLocaleString()} beds)</span>
+   522→                </span>
+   523→              ))}
+   524→            </div>
+   525→          )}
+   526→        </CardContent>
+   527→      </Card>
+   528→
+   529→      {/* Records by Sub-City with Woreda breakdown */}
+   530→      <Card>
+   531→        <CardHeader className="pb-3">
+   532→          <div className="flex items-center justify-between">
+   533→            <div>
+   534→              <CardTitle className="text-lg">Records by Sub-City / Kuttaa Maggalaa</CardTitle>
+   535→              <CardDescription>Distribution across Bishoftu sub-cities with woreda breakdown</CardDescription>
+   536→            </div>
+   537→            <div className="flex gap-1">
+   538→              <button
+   539→                type="button"
+   540→                onClick={expandAll}
+   541→                className="text-[10px] text-emerald-600 hover:text-emerald-800 font-medium px-1.5 py-0.5 rounded hover:bg-emerald-50"
+   542→              >
+   543→                Expand All
+   544→              </button>
+   545→              <button
+   546→                type="button"
+   547→                onClick={collapseAll}
+   548→                className="text-[10px] text-muted-foreground hover:text-foreground font-medium px-1.5 py-0.5 rounded hover:bg-muted"
+   549→              >
+   550→                Collapse All
+   551→              </button>
+   552→            </div>
+   553→          </div>
+   554→        </CardHeader>
+   555→        <CardContent className="space-y-2">
+   556→          {stats.subCityStats.map((sc) => {
+   557→            const isExpanded = expandedSubCities.has(sc.subCity);
+   558→            const woredas = stats.woredaBySubCity[sc.subCity] || [];
+   559→            const maxWoredaCount = Math.max(...woredas.map((w) => w.count), 1);
+   560→            const maxWoredaBeds = Math.max(...woredas.map((w) => w.beds), 1);
+   561→
+   562→            return (
+   563→              <div key={sc.subCity} className="rounded-lg border bg-white">
+   564→                {/* Sub-city header row - clickable */}
+   565→                <button
+   566→                  type="button"
+   567→                  onClick={() => toggleSubCity(sc.subCity)}
+   568→                  className="w-full px-3 py-2.5 flex items-center gap-2 text-left hover:bg-muted/30 transition-colors rounded-lg"
+   569→                >
+   570→                  <div className={`shrink-0 transition-transform ${isExpanded ? 'rotate-0' : '-rotate-90'}`}>
+   571→                    <ChevronDown className="h-4 w-4 text-muted-foreground" />
+   572→                  </div>
+   573→                  <div className="flex-1 min-w-0">
+   574→                    <div className="flex items-center justify-between gap-2">
+   575→                      <span className="font-semibold text-sm">{sc.subCity}</span>
+   576→                      <div className="flex items-center gap-2">
+   577→                        <span className="text-xs text-muted-foreground">
+   578→                          {woredas.length} wereda{woredas.length !== 1 ? 's' : ''}
+   579→                        </span>
+   580→                        <span className="inline-flex items-center justify-center h-5 min-w-[20px] rounded-full bg-emerald-100 text-emerald-700 text-[11px] font-bold px-1.5">
+   581→                          {sc._count}
+   582→                        </span>
+   583→                        <span className="inline-flex items-center justify-center h-5 min-w-[20px] rounded-full bg-sky-100 text-sky-700 text-[11px] font-bold px-1.5">
+   584→                          {(stats.subCityBeds[sc.subCity] || 0).toLocaleString()}
+   585→                        </span>
+   586→                      </div>
+   587→                    </div>
+   588→                    <div className="mt-1 space-y-0.5">
+   589→                      <div className="flex items-center gap-1">
+   590→                        <span className="text-[9px] text-emerald-600 w-8 shrink-0">GH</span>
+   591→                        <div className="flex-1 h-1.5 overflow-hidden rounded-full bg-muted">
+   592→                          <div
+   593→                            className="h-full rounded-full bg-emerald-500 transition-all"
+   594→                            style={{ width: `${(sc._count / maxSubCityCount) * 100}%` }}
+   595→                          />
+   596→                        </div>
+   597→                      </div>
+   598→                      <div className="flex items-center gap-1">
+   599→                        <span className="text-[9px] text-sky-600 w-8 shrink-0">Beds</span>
+   600→                        <div className="flex-1 h-1.5 overflow-hidden rounded-full bg-muted">
+   601→                          <div
+   602→                            className="h-full rounded-full bg-sky-500 transition-all"
+   603→                            style={{ width: `${((stats.subCityBeds[sc.subCity] || 0) / maxSubCityBeds) * 100}%` }}
+   604→                          />
+   605→                        </div>
+   606→                      </div>
+   607→                    </div>
+   608→                  </div>
+   609→                </button>
+   610→
+   611→                {/* Woreda breakdown - expandable */}
+   612→                {isExpanded && woredas.length > 0 && (
+   613→                  <div className="px-3 pb-2.5 pt-0.5 space-y-2 border-t ml-6">
+   614→                    {/* Legend */}
+   615→                    <div className="flex items-center gap-4 text-[10px] pt-1">
+   616→                      <span className="flex items-center gap-1">
+   617→                        <span className="inline-block h-2 w-2 rounded-full bg-emerald-500" />
+   618→                        <span className="text-emerald-700 font-medium">Guest Houses</span>
+   619→                      </span>
+   620→                      <span className="flex items-center gap-1">
+   621→                        <span className="inline-block h-2 w-2 rounded-full bg-sky-500" />
+   622→                        <span className="text-sky-700 font-medium">Beds</span>
+   623→                      </span>
+   624→                    </div>
+   625→                    {woredas
+   626→                      .sort((a, b) => b.count - a.count)
+   627→                      .map((w) => (
+   628→                      <div key={w.area} className="flex items-center gap-2">
+   629→                        <MapPin className="h-3 w-3 text-slate-400 shrink-0" />
+   630→                        <div className="flex-1 min-w-0">
+   631→                          <div className="flex items-center justify-between text-xs mb-0.5">
+   632→                            <span className="text-muted-foreground truncate">{w.area}</span>
+   633→                            <div className="flex items-center gap-2 shrink-0 ml-2">
+   634→                              <span className="inline-flex items-center justify-center h-4 min-w-[16px] rounded bg-emerald-100 text-emerald-700 text-[10px] font-bold px-1">
+   635→                                {w.count}
+   636→                              </span>
+   637→                              <span className="inline-flex items-center justify-center h-4 min-w-[16px] rounded bg-sky-100 text-sky-700 text-[10px] font-bold px-1">
+   638→                                {w.beds.toLocaleString()}
+   639→                              </span>
+   640→                            </div>
+   641→                          </div>
+   642→                          <div className="space-y-0.5">
+   643→                            <div className="h-1 overflow-hidden rounded-full bg-muted">
+   644→                              <div
+   645→                                className="h-full rounded-full bg-emerald-500 transition-all"
+   646→                                style={{ width: `${(w.count / maxWoredaCount) * 100}%` }}
+   647→                              />
+   648→                            </div>
+   649→                            <div className="h-1 overflow-hidden rounded-full bg-muted">
+   650→                              <div
+   651→                                className="h-full rounded-full bg-sky-500 transition-all"
+   652→                                style={{ width: `${(w.beds / maxWoredaBeds) * 100}%` }}
+   653→                              />
+   654→                            </div>
+   655→                          </div>
+   656→                        </div>
+   657→                      </div>
+   658→                    ))}
+   659→                  </div>
+   660→                )}
+   661→              </div>
+   662→            );
+   663→          })}
+   664→        </CardContent>
+   665→      </Card>
+   666→
+   667→      {/* License Type Distribution */}
+   668→      <Card>
+   669→        <CardHeader className="pb-3">
+   670→          <CardTitle className="text-lg">License Type Distribution</CardTitle>
+   671→          <CardDescription>Types of licenses registered</CardDescription>
+   672→        </CardHeader>
+   673→        <CardContent>
+   674→          <div className="grid grid-cols-2 gap-3">
+   675→            {stats.licenseStats.map((ls) => {
+   676→              const pct = Math.round((ls._count / stats.total) * 100);
+   677→              const beds = stats.licenseBeds[ls.licenseType] || 0;
+   678→              return (
+   679→                <div
+   680→                  key={ls.licenseType}
+   681→                  className="rounded-lg border p-3 text-center"
+   682→                >
+   683→                  <p className="text-2xl font-bold text-emerald-600">
+   684→                    {ls._count}
+   685→                  </p>
+   686→                  <p className="text-xs font-medium">{ls.licenseType}</p>
+   687→                  <p className="text-xs text-muted-foreground">{pct}%</p>
+   688→                  <p className="mt-1 text-xs font-semibold text-sky-600">
+   689→                    {beds.toLocaleString()} beds
+   690→                  </p>
+   691→                </div>
+   692→              );
+   693→            })}
+   694→          </div>
+   695→        </CardContent>
+   696→      </Card>
+   697→    </div>
+   698→  );
+   699→}
+   700→

@@ -15,6 +15,15 @@ export async function GET() {
 
     const users = await db.user.findMany({
       orderBy: { createdAt: 'desc' },
+      select: {
+        id: true,
+        username: true,
+        name: true,
+        role: true,
+        assignedSubCity: true,
+        assignedArea: true,
+        createdAt: true,
+      },
     });
 
     return NextResponse.json(users);
@@ -33,7 +42,7 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 403 });
     }
 
-    const { name, username, password } = await request.json();
+    const { name, username, password, assignedSubCity, assignedArea } = await request.json();
 
     if (!name || !username || !password) {
       return NextResponse.json(
@@ -56,6 +65,8 @@ export async function POST(request: NextRequest) {
         username,
         password: hashPassword(password),
         role: 'COLLECTOR',
+        assignedSubCity: assignedSubCity || null,
+        assignedArea: assignedArea || null,
       },
     });
 
@@ -65,6 +76,8 @@ export async function POST(request: NextRequest) {
         name: newUser.name,
         username: newUser.username,
         role: newUser.role,
+        assignedSubCity: newUser.assignedSubCity,
+        assignedArea: newUser.assignedArea,
         plainPassword: password,
         createdAt: newUser.createdAt,
       },

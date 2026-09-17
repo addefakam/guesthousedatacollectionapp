@@ -3,6 +3,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { getServerSession } from 'next-auth';
 import { authOptions } from '../../auth/[...nextauth]/route';
 
+// PATCH /api/meetings/[id] — update meeting (e.g., change status)
 export async function PATCH(
   request: NextRequest,
   { params }: { params: Promise<{ id: string }> }
@@ -18,21 +19,23 @@ export async function PATCH(
     const { id } = await params;
     const body = await request.json();
 
-    const updated = await db.user.update({
+    const updated = await db.meeting.update({
       where: { id },
       data: {
-        assignedSubCity: body.assignedSubCity !== undefined ? body.assignedSubCity : undefined,
-        assignedArea: body.assignedArea !== undefined ? body.assignedArea : undefined,
+        title: body.title,
+        date: body.date ? new Date(body.date) : undefined,
+        status: body.status,
       },
     });
 
     return NextResponse.json(updated);
   } catch (error) {
-    console.error('Error updating user:', error);
+    console.error('Error updating meeting:', error);
     return NextResponse.json({ error: 'Failed' }, { status: 500 });
   }
 }
 
+// DELETE /api/meetings/[id]
 export async function DELETE(
   _request: NextRequest,
   { params }: { params: Promise<{ id: string }> }
@@ -46,19 +49,10 @@ export async function DELETE(
     }
 
     const { id } = await params;
-
-    const targetUser = await db.user.findUnique({ where: { id } });
-    if (!targetUser) {
-      return NextResponse.json({ error: 'Not found' }, { status: 404 });
-    }
-    if (targetUser.role === 'ADMIN') {
-      return NextResponse.json({ error: 'Cannot delete admin' }, { status: 403 });
-    }
-
-    await db.user.delete({ where: { id } });
+    await db.meeting.delete({ where: { id } });
     return NextResponse.json({ success: true });
   } catch (error) {
-    console.error('Error deleting user:', error);
+    console.error('Error deleting meeting:', error);
     return NextResponse.json({ error: 'Failed' }, { status: 500 });
   }
 }

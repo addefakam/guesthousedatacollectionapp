@@ -3,7 +3,7 @@
 import { useState } from 'react';
 import { useSession } from 'next-auth/react';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { ClipboardList, BarChart3, Database, Shield, LogOut, Wifi, WifiOff, RefreshCw, CloudOff } from 'lucide-react';
+import { ClipboardList, BarChart3, Database, Shield, LogOut, Wifi, WifiOff, RefreshCw, CloudOff, Users, Calendar } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { signOut } from 'next-auth/react';
 import SurveyForm from '@/components/guesthouse/SurveyForm';
@@ -11,12 +11,15 @@ import DataList from '@/components/guesthouse/DataList';
 import Dashboard from '@/components/guesthouse/Dashboard';
 import LoginForm from '@/components/LoginForm';
 import AdminPanel from '@/components/AdminPanel';
+import MeetingManager from '@/components/guesthouse/MeetingManager';
+import AttendanceDashboard from '@/components/guesthouse/AttendanceDashboard';
+import CollectorAttendance from '@/components/guesthouse/CollectorAttendance';
 import { useAuth } from '@/components/AuthProvider';
 import { useOfflineSync } from '@/hooks/useOfflineSync';
 
 export default function Home() {
   const { status } = useSession();
-  const { isAdmin, userName, userId } = useAuth();
+  const { isAdmin, isCollector, userName, userId } = useAuth();
   const [refreshTrigger, setRefreshTrigger] = useState(0);
   const { isOnline, pendingCount, isSyncing, syncPendingSurveys, saveOffline } = useOfflineSync();
 
@@ -39,15 +42,20 @@ export default function Home() {
     return <LoginForm />;
   }
 
+  // Admin tabs: Survey, Data, Dashboard, Meetings, Attendance, Users
+  // Collector tabs: Survey, Attendance
   const tabs = isAdmin
     ? [
         { value: 'survey', label: "Qo'annoo", icon: <ClipboardList className="h-4 w-4" /> },
         { value: 'data', label: 'Galmeewwan', icon: <Database className="h-4 w-4" /> },
         { value: 'dashboard', label: 'Istaatiksii', icon: <BarChart3 className="h-4 w-4" /> },
+        { value: 'meetings', label: 'Meetings', icon: <Calendar className="h-4 w-4" /> },
+        { value: 'attendance', label: 'Attendance', icon: <Users className="h-4 w-4" /> },
         { value: 'admin', label: 'Fayyadamtoota', icon: <Shield className="h-4 w-4" /> },
       ]
     : [
         { value: 'survey', label: "Qo'annoo", icon: <ClipboardList className="h-4 w-4" /> },
+        { value: 'attendance', label: 'Attendance', icon: <Users className="h-4 w-4" /> },
       ];
 
   return (
@@ -114,7 +122,7 @@ export default function Home() {
       {/* Main Content */}
       <main className="mx-auto w-full max-w-2xl flex-1 px-3 py-3 pb-20 sm:px-4 sm:py-4 sm:pb-24">
         <Tabs defaultValue="survey" className="w-full">
-          <TabsList className={isAdmin ? 'mb-3 grid w-full grid-cols-4 gap-0.5 sm:mb-4 sm:gap-1' : 'mb-3 w-full sm:mb-4'}>
+          <TabsList className={`mb-3 w-full sm:mb-4 ${isAdmin ? 'grid grid-cols-3 gap-0.5 sm:gap-1' : 'grid grid-cols-2 gap-0.5 sm:gap-1'}`}>
             {tabs.map((tab) => (
               <TabsTrigger
                 key={tab.value}
@@ -143,6 +151,14 @@ export default function Home() {
 
           <TabsContent value="dashboard" className="mt-2 sm:mt-3">
             <Dashboard />
+          </TabsContent>
+
+          <TabsContent value="meetings" className="mt-2 sm:mt-3">
+            <MeetingManager />
+          </TabsContent>
+
+          <TabsContent value="attendance" className="mt-2 sm:mt-3">
+            {isAdmin ? <AttendanceDashboard /> : <CollectorAttendance />}
           </TabsContent>
 
           {isAdmin && (

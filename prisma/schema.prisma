@@ -11,13 +11,17 @@ datasource db {
 }
 
 model User {
-  id        String   @id @default(cuid())
-  username  String   @unique
-  password  String
-  name      String
-  role      String   @default("COLLECTOR") // ADMIN or COLLECTOR
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
+  id             String   @id @default(cuid())
+  username       String   @unique
+  password       String
+  name           String
+  role           String   @default("COLLECTOR") // ADMIN or COLLECTOR
+  assignedSubCity String? // sub-city assignment for collectors
+  assignedArea   String?  // woreda/area assignment for collectors
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
+
+  attendances Attendance[]
 }
 
 model GuestHouse {
@@ -47,4 +51,32 @@ model GuestHouse {
   signature        String?
   createdAt        DateTime @default(now())
   updatedAt        DateTime @updatedAt
+
+  attendances Attendance[]
+}
+
+model Meeting {
+  id        String   @id @default(cuid())
+  title     String
+  date      DateTime
+  status    String   @default("ACTIVE") // UPCOMING, ACTIVE, COMPLETED
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  attendances Attendance[]
+}
+
+model Attendance {
+  id           String   @id @default(cuid())
+  meetingId    String
+  guestHouseId String
+  collectorId  String
+  status       String   @default("ABSENT") // PRESENT or ABSENT
+  markedAt     DateTime @updatedAt
+
+  meeting    Meeting    @relation(fields: [meetingId], references: [id], onDelete: Cascade)
+  guestHouse GuestHouse @relation(fields: [guestHouseId], references: [id], onDelete: Cascade)
+  collector  User       @relation(fields: [collectorId], references: [id], onDelete: Cascade)
+
+  @@unique([meetingId, guestHouseId]) // one attendance record per guest house per meeting
 }

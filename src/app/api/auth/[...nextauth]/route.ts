@@ -35,6 +35,8 @@ export const authOptions: NextAuthOptions = {
             name: user.name,
             role: user.role,
             username: user.username,
+            assignedSubCity: user.assignedSubCity,
+            assignedArea: user.assignedArea,
           };
         } catch (err) {
           console.error('AUTH ERROR:', err);
@@ -49,6 +51,8 @@ export const authOptions: NextAuthOptions = {
         token.id = user.id;
         token.role = (user as Record<string, unknown>).role;
         token.username = (user as Record<string, unknown>).username;
+        token.assignedSubCity = (user as Record<string, unknown>).assignedSubCity;
+        token.assignedArea = (user as Record<string, unknown>).assignedArea;
       }
       return token;
     },
@@ -57,6 +61,8 @@ export const authOptions: NextAuthOptions = {
         (session.user as Record<string, unknown>).id = token.id;
         (session.user as Record<string, unknown>).role = token.role;
         (session.user as Record<string, unknown>).username = token.username;
+        (session.user as Record<string, unknown>).assignedSubCity = token.assignedSubCity;
+        (session.user as Record<string, unknown>).assignedArea = token.assignedArea;
       }
       return session;
     },

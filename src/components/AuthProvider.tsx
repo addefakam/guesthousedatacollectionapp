@@ -22,5 +22,7 @@ export function useAuth() {
     isCollector: user?.role === 'COLLECTOR',
     userName: user?.name as string | undefined,
     userId: user?.id as string | undefined,
+    assignedSubCity: user?.assignedSubCity as string | null | undefined,
+    assignedArea: user?.assignedArea as string | null | undefined,
   };
 }
