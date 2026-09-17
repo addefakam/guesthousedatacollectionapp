@@ -18,6 +18,7 @@ export async function GET(req: NextRequest) {
     const records = await db.guestHouse.findMany({
       where,
       select: {
+        id: true,
         guestHouseName: true,
         subCity: true,
         area: true,
@@ -27,6 +28,7 @@ export async function GET(req: NextRequest) {
         serviceRating: true,
         contactPhone: true,
         contactName: true,
+        ownerName: true,
         hasRestaurant: true,
         hasParking: true,
         hasWiFi: true,

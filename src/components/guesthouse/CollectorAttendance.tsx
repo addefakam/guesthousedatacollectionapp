@@ -136,11 +136,18 @@ export default function CollectorAttendance() {
           status: newStatus,
         }),
       });
-      if (!res.ok) throw new Error();
-    } catch {
+      if (!res.ok) {
+        const errData = await res.json().catch(() => ({}));
+        throw new Error(errData.error || `Failed (${res.status})`);
+      }
+    } catch (error) {
       // Revert on failure
       setAttendanceMap((prev) => ({ ...prev, [guestHouseId]: currentStatus }));
-      toast({ title: 'Error', description: 'Failed to update attendance', variant: 'destructive' });
+      toast({
+        title: 'Error',
+        description: error instanceof Error ? error.message : 'Failed to update attendance',
+        variant: 'destructive',
+      });
     } finally {
       setToggling(null);
     }
