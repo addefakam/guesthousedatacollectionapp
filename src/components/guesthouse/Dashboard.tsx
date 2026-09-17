@@ -198,7 +198,9 @@ export default function Dashboard() {
   const CustomTooltip = ({ active, payload, label }: { active?: boolean; payload?: Array<{ value: number; dataKey: string }>; label?: string }) => {
     if (!active || !payload?.length) return null;
     const data = payload[0];
-    const ghCount = chartData.find(d => d.name === label)?.count || 0;
+    const countValue = chartData.find(d => d.name === label)?.count || 0;
+    // Label changes based on chart view: license type name (e.g. "Resort", "Hotel") or "Guest Houses"
+    const countLabel = chartView === 'licenseType' ? label : 'Guest Houses';
     return (
       <div className="rounded-lg border bg-white px-3 py-2 shadow-lg text-xs">
         <p className="font-semibold text-sm mb-1">{label}</p>
@@ -208,7 +210,7 @@ export default function Dashboard() {
         </p>
         <p className="text-emerald-600 mt-0.5">
           <span className="inline-block h-2 w-2 rounded-full bg-emerald-500 mr-1.5" />
-          Guest Houses: <span className="font-bold">{ghCount}</span>
+          {countLabel}: <span className="font-bold">{countValue}</span>
         </p>
       </div>
     );
