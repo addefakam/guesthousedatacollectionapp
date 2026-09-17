@@ -25,6 +25,8 @@ import {
   ChevronDown,
   MapPin,
   BarChart3,
+  X,
+  Loader2,
 } from 'lucide-react';
 import {
   BarChart,
@@ -79,6 +81,10 @@ export default function Dashboard() {
   const [loading, setLoading] = useState(true);
   const [expandedSubCities, setExpandedSubCities] = useState<Set<string>>(new Set());
   const [chartView, setChartView] = useState<ChartView>('licenseType');
+  const [selectedBar, setSelectedBar] = useState<string | null>(null);
+  const [detailRecords, setDetailRecords] = useState<Record<string, unknown>[] | null>(null);
+  const [detailLoading, setDetailLoading] = useState(false);
+  const [detailMeta, setDetailMeta] = useState<{ filterBy: string; value: string } | null>(null);
 
   useEffect(() => {
     async function fetchStats() {
@@ -136,6 +142,43 @@ export default function Dashboard() {
 
   const collapseAll = () => {
     setExpandedSubCities(new Set());
+  };
+
+  // Handle bar click — fetch detail records from API
+  const handleBarClick = async (barName: string) => {
+    // Toggle off if clicking the same bar
+    if (selectedBar === barName) {
+      setSelectedBar(null);
+      setDetailRecords(null);
+      setDetailMeta(null);
+      return;
+    }
+
+    setSelectedBar(barName);
+    setDetailLoading(true);
+    setDetailRecords(null);
+
+    const filterBy = chartView === 'licenseType' ? 'licenseType' : 'subCity';
+    setDetailMeta({ filterBy, value: barName });
+
+    try {
+      const res = await fetch(`/api/guesthouses/details?filterBy=${filterBy}&value=${encodeURIComponent(barName)}`);
+      if (!res.ok) throw new Error();
+      const data = await res.json();
+      setDetailRecords(data.records || []);
+    } catch {
+      setDetailRecords([]);
+    } finally {
+      setDetailLoading(false);
+    }
+  };
+
+  // Clear detail when switching chart view
+  const handleChartViewChange = (v: string) => {
+    setChartView(v as ChartView);
+    setSelectedBar(null);
+    setDetailRecords(null);
+    setDetailMeta(null);
   };
 
   if (loading) {
@@ -300,7 +343,7 @@ export default function Dashboard() {
             </div>
             <Select
               value={chartView}
-              onValueChange={(v) => setChartView(v as ChartView)}
+              onValueChange={(v) => handleChartViewChange(v)}
             >
               <SelectTrigger className="w-[180px] shrink-0 text-xs h-8">
                 <SelectValue />
@@ -342,11 +385,17 @@ export default function Dashboard() {
                     dataKey="beds"
                     radius={[6, 6, 0, 0]}
                     maxBarSize={56}
+                    onClick={(data: { name?: string }) => {
+                      if (data?.name) handleBarClick(data.name);
+                    }}
+                    style={{ cursor: 'pointer' }}
                   >
-                    {chartData.map((_entry, index) => (
+                    {chartData.map((entry, index) => (
                       <Cell
                         key={`cell-${index}`}
                         fill={CHART_COLORS[index % CHART_COLORS.length]}
+                        stroke={selectedBar === entry.name ? '#1e293b' : 'none'}
+                        strokeWidth={selectedBar === entry.name ? 2 : 0}
                       />
                     ))}
                     <LabelList
@@ -362,6 +411,97 @@ export default function Dashboard() {
           ) : (
             <div className="flex h-40 items-center justify-center text-sm text-muted-foreground">
               No data available for this view
+            </div>
+          )}
+
+          {/* Click hint */}
+          {!selectedBar && chartData.length > 0 && (
+            <p className="mt-2 text-center text-[11px] text-muted-foreground/60">
+              Click any bar to see detailed records
+            </p>
+          )}
+
+          {/* Clicked bar detail table */}
+          {selectedBar && detailMeta && (
+            <div className="mt-3 rounded-lg border bg-slate-50 overflow-hidden">
+              <div className="flex items-center justify-between px-3 py-2 bg-slate-100 border-b">
+                <div className="flex items-center gap-2">
+                  <Building2 className="h-4 w-4 text-slate-500" />
+                  <span className="text-sm font-semibold text-slate-700">
+                    {selectedBar}
+                  </span>
+                  <span className="text-xs text-muted-foreground">
+                    — {detailRecords ? `${detailRecords.length} record${detailRecords.length !== 1 ? 's' : ''}` : 'Loading...'}
+                  </span>
+                </div>
+                <button
+                  type="button"
+                  onClick={() => { setSelectedBar(null); setDetailRecords(null); setDetailMeta(null); }}
+                  className="rounded p-1 hover:bg-slate-200 transition-colors"
+                >
+                  <X className="h-4 w-4 text-slate-500" />
+                </button>
+              </div>
+              {detailLoading ? (
+                <div className="flex items-center justify-center py-8 gap-2 text-sm text-muted-foreground">
+                  <Loader2 className="h-4 w-4 animate-spin" />
+                  Loading details...
+                </div>
+              ) : detailRecords && detailRecords.length > 0 ? (
+                <div className="overflow-x-auto">
+                  <table className="w-full text-xs">
+                    <thead>
+                      <tr className="border-b bg-slate-100/60">
+                        <th className="px-2.5 py-2 text-left font-semibold text-slate-600">#</th>
+                        <th className="px-2.5 py-2 text-left font-semibold text-slate-600">Name</th>
+                        <th className="px-2.5 py-2 text-left font-semibold text-slate-600">Sub-City</th>
+                        <th className="px-2.5 py-2 text-left font-semibold text-slate-600">Woreda</th>
+                        <th className="px-2.5 py-2 text-left font-semibold text-slate-600">License</th>
+                        <th className="px-2.5 py-2 text-right font-semibold text-slate-600">Rooms</th>
+                        <th className="px-2.5 py-2 text-center font-semibold text-slate-600">Rating</th>
+                        <th className="px-2.5 py-2 text-center font-semibold text-slate-600">WiFi</th>
+                        <th className="px-2.5 py-2 text-center font-semibold text-slate-600">Parking</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {detailRecords.map((rec, i) => {
+                        const r = rec as Record<string, unknown>;
+                        return (
+                          <tr key={i} className="border-b last:border-b-0 hover:bg-white/60">
+                            <td className="px-2.5 py-1.5 text-muted-foreground">{i + 1}</td>
+                            <td className="px-2.5 py-1.5 font-medium text-slate-700 max-w-[140px] truncate">{String(r.guestHouseName || '')}</td>
+                            <td className="px-2.5 py-1.5 text-slate-600">{String(r.subCity || '')}</td>
+                            <td className="px-2.5 py-1.5 text-slate-600">{String(r.area || '')}</td>
+                            <td className="px-2.5 py-1.5">
+                              <span className="inline-flex items-center rounded-full bg-violet-100 px-1.5 py-0.5 text-[10px] font-semibold text-violet-700">
+                                {String(r.licenseType || '')}
+                              </span>
+                            </td>
+                            <td className="px-2.5 py-1.5 text-right font-semibold text-sky-600">{Number(r.numberOfRooms || 0).toLocaleString()}</td>
+                            <td className="px-2.5 py-1.5 text-center">
+                              <span className={`inline-flex items-center justify-center h-5 w-5 rounded-full text-[10px] font-bold ${
+                                Number(r.serviceRating) >= 4 ? 'bg-amber-100 text-amber-700' :
+                                Number(r.serviceRating) >= 2 ? 'bg-orange-100 text-orange-700' :
+                                'bg-red-100 text-red-700'
+                              }`}>
+                                {Number(r.serviceRating || 0)}
+                              </span>
+                            </td>
+                            <td className="px-2.5 py-1.5 text-center">
+                              {r.hasWiFi ? <span className="text-emerald-500 font-bold text-[10px]">Yes</span> : <span className="text-slate-300 text-[10px]">—</span>}
+                            </td>
+                            <td className="px-2.5 py-1.5 text-center">
+                              {r.hasParking ? <span className="text-emerald-500 font-bold text-[10px]">Yes</span> : <span className="text-slate-300 text-[10px]">—</span>}
+                            </td>
+                          </tr>
+                        );
+                      })}
+                    </tbody>
+                  </table>
+                </div>
+              ) : (
+                <div className="py-6 text-center text-sm text-muted-foreground">No records found</div>
+              )}
             </div>
           )}
 
